@@ -1,7 +1,4 @@
 import os
-from utils import apierror, apiresponse
-
-
 
 
 def validate_file_extension(filename: str) -> bool:
@@ -14,16 +11,12 @@ def validate_file_extension(filename: str) -> bool:
     Returns:
         bool: True if the file extension is valid, False otherwise.
     """
-    
     allowed_extensions = ['pdf', 'docx', 'txt']
     if not filename or '.' not in filename:
         return False
 
     ext = filename.rsplit('.', 1)[1].lower()
     return ext in allowed_extensions
-
-
-
 
 
 def validate_file_size(file_path: str) -> bool:
@@ -36,13 +29,13 @@ def validate_file_size(file_path: str) -> bool:
     Returns:
         bool: True if the file size is within the limit, False otherwise.
     """
-    max_size_mb = 5  
+    max_size_mb = 5
 
     if not os.path.isfile(file_path):
         return False
 
     file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
-    return file_size_mb <= max_size_mb  
+    return file_size_mb <= max_size_mb
 
 
 def validate_not_empty(file_path: str) -> bool:
@@ -51,6 +44,7 @@ def validate_not_empty(file_path: str) -> bool:
 
     Args:
         file_path (str): The path to the file to validate.
+
     Returns:
         bool: True if the file is not empty, False otherwise.
     """
