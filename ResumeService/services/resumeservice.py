@@ -2,6 +2,7 @@ import os
 from ResumeService.loaders.resume_loaders import ResumeLoader
 from ResumeService.preprocessing.preprocessing import TextPreprocessor
 from ResumeService.analyzer.analysis import ResumeAnalyzer
+from ResumeService.repository.resume_datasave import save_resume
 
 
 class ResumeService:
@@ -32,6 +33,6 @@ class ResumeService:
         structured_data = self.analyzer.analyze(cleaned_text)
 
         # 5️⃣ Save structured resume data (TODO)
-        # saved_resume = save_resume(structured_data)
+        saved_resume = save_resume(structured_data)
 
-        return structured_data
+        return saved_resume

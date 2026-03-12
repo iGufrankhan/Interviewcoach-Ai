@@ -6,5 +6,7 @@ pypdf
 docx2txt
 fastapi[all]
 python-dotenv
+pymongo[srv]
+mongoengine
 
 

@@ -4,8 +4,13 @@ from utils.apierror import APIError
 from utils.apiresponse import success_response, error_response
 from ResumeService.services.resumeservice import ResumeService
 from ResumeService.utils.file_validators import validate_file_extension
+from Models.resumeservice.resume_models import Resume_data
+from ResumeService.repository.resume_datasave import _ensure_list
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/api",
+    tags=["Resume Upload"]
+)
 
 if not os.getenv("GROQ_API_KEY"):
     raise APIError(status_code=500, message="GROQ_API_KEY environment variable not set", error_code="MISSING_API_KEY")
@@ -19,7 +24,7 @@ resume_service = ResumeService(
 )
 
 
-@router.post("/upload-resume")
+@router.post("/uploadresume")
 async def upload_resume(file: UploadFile = File(...)):
 
     # Validate file extension
@@ -43,12 +48,5 @@ async def upload_resume(file: UploadFile = File(...)):
             error_code="PROCESSING_ERROR",
             status_code=500
         )
-
-
-
-
-
-
-
 
 
