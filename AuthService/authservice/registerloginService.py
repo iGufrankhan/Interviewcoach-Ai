@@ -1,5 +1,3 @@
-## send otp, verify otp, complete registration, login user
-
 from AuthService.utils.emailservice.emailSignup import (
     initializeemailsignup,
     login_user,
@@ -8,20 +6,17 @@ from AuthService.utils.emailservice.emailSignup import (
 )
 
 
+
 async def SendOTP(email: str):
     return await initializeemailsignup(email)
 
 
-async def VerifyOTP(email: str, otp: str):
-    return await verifyotp(email, otp)
+async def VerifyOTP(email: str, otp: str, purpose: str = "registration"):
+    return await verifyotp(email, otp, purpose)
 
 
-async def CompleteRegistration(email: str, user_data: dict):
-    return await complete_registration(
-        email=email,
-        password=user_data["password"],
-        name=user_data.get("name", ""),
-    )
+async def CompleteRegistration(token: str, email: str, password: str, name: str = "", username: str = ""):
+    return await complete_registration(token=token, email=email, password=password, name=name, username=username)
 
 
 async def LoginUser(email: str, password: str):
