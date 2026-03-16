@@ -1,14 +1,13 @@
 from fastapi import APIRouter
-from utils.apiresponse import success_response, error_response
+from utils.apiresponse import error_response
 from utils.apierror import APIError
-from AuthService.schemas.user import UserSignupRequest
+from AuthService.schemas.user import userRegistrationRequest as UserSignupRequest
 from AuthService.schemas.otp import OTPRequest, OTPVerificationRequest
 from AuthService.authservice.registerloginService import (
     SendOTP,
     VerifyOTP,
     CompleteRegistration,
 )
-
 
 router = APIRouter(
     prefix="/api/auth",
@@ -20,11 +19,7 @@ router = APIRouter(
 async def send_otp(request: OTPRequest):
     try:
         result = await SendOTP(request.email)
-        return success_response(
-            message="OTP sent successfully",
-            data=result,
-            status_code=200
-        )
+        return result
     except APIError as e:
         detail = e.detail if isinstance(e.detail, dict) else {}
         return error_response(
@@ -43,12 +38,8 @@ async def send_otp(request: OTPRequest):
 @router.post("/verify-otp")
 async def verify_otp(request: OTPVerificationRequest):
     try:
-        result = await VerifyOTP(request.email, request.otp, request.purpose)
-        return success_response(
-            message="OTP verified successfully",
-            data=result,
-            status_code=200
-        )
+        result = await VerifyOTP(request.email, request.otp)
+        return result
     except APIError as e:
         detail = e.detail if isinstance(e.detail, dict) else {}
         return error_response(
@@ -68,17 +59,12 @@ async def verify_otp(request: OTPVerificationRequest):
 async def complete_registration(request: UserSignupRequest):
     try:
         result = await CompleteRegistration(
-            request.token,
             request.email,
             request.password,
-            request.name,
-            request.username
+            request.fullname,
+            request.registration_token,
         )
-        return success_response(
-            message="Registration completed successfully",
-            data=result,
-            status_code=200
-        )
+        return result
     except APIError as e:
         detail = e.detail if isinstance(e.detail, dict) else {}
         return error_response(

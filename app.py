@@ -21,8 +21,4 @@ app.include_router(resume_router, prefix="/resume")
 app.include_router(update_router, prefix="/resume")
 app.include_router(delete_router, prefix="/resume")
 
-app.include_router(resume_router, prefix="/resume")
-app.include_router(update_router, prefix="/resume")
-app.include_router(delete_router, prefix="/resume")
-
 

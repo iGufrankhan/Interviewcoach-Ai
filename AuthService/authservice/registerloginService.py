@@ -1,22 +1,26 @@
-from AuthService.utils.emailservice.emailSignup import (
+from AuthService.controllers.emailservice.emailSignup import (
     initializeemailsignup,
-    login_user,
     verifyotp,
     complete_registration,
 )
-
+from AuthService.controllers.emailservice.login_service import login_user
 
 
 async def SendOTP(email: str):
     return await initializeemailsignup(email)
 
 
-async def VerifyOTP(email: str, otp: str, purpose: str = "registration"):
-    return await verifyotp(email, otp, purpose)
+async def VerifyOTP(email: str, otp: str):
+    return await verifyotp(email, otp)
 
 
-async def CompleteRegistration(token: str, email: str, password: str, name: str = "", username: str = ""):
-    return await complete_registration(token=token, email=email, password=password, name=name, username=username)
+async def CompleteRegistration(email: str, password: str, fullname: str = "", registration_token: str = ""):
+    return await complete_registration(
+        email=email,
+        password=password,
+        fullname=fullname,
+        registration_token=registration_token
+    )
 
 
 async def LoginUser(email: str, password: str):

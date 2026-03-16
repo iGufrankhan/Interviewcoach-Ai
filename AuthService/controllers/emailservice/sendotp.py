@@ -1,5 +1,5 @@
 from fastapi_mail import FastMail, MessageSchema
-from AuthService.utils.emailservice.emailTranspoter import CreateTransporter
+from AuthService.controllers.emailservice.emailTranspoter import CreateTransporter
 from Models.userReg.otp import OTP
 from AuthService.utils.helper.otpgenerate import generate_otp
 from utils.apierror import APIError
