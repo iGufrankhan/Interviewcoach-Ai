@@ -12,6 +12,9 @@ from AuthService.api.register_api import router as register_router
 from AuthService.api.login_api import router as login_router
 
 
+from JobMaching.api.analyse import router as analyse_router
+
+
 app = FastAPI()
 
 app.include_router(register_router)
@@ -20,5 +23,7 @@ app.include_router(login_router)
 app.include_router(resume_router, prefix="/resume")
 app.include_router(update_router, prefix="/resume")
 app.include_router(delete_router, prefix="/resume")
+
+app.include_router(analyse_router, prefix="/jobmatching")
 
 

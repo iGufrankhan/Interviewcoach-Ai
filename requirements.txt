@@ -12,5 +12,6 @@ passlib[bcrypt]>=1.7.4
 email-validator
 python-jose[cryptography]
 fastapi-mail
+beautifulsoup4
 
 
