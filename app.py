@@ -14,6 +14,8 @@ from AuthService.api.login_api import router as login_router
 
 from JobMaching.api.analyse import router as analyse_router
 
+from interviewService.api.question_gen import router as question_gen_router
+
 
 app = FastAPI()
 
@@ -25,5 +27,7 @@ app.include_router(update_router, prefix="/resume")
 app.include_router(delete_router, prefix="/resume")
 
 app.include_router(analyse_router, prefix="/jobmatching")
+
+app.include_router(question_gen_router, prefix="/interviewservice")
 
 

@@ -10,5 +10,6 @@ class User(Document):
     password_hash = StringField(required=True)
     fullname = StringField()
     is_email_verified = BooleanField(default=False)
+    
     created_at = DateTimeField(default=datetime.now)
 

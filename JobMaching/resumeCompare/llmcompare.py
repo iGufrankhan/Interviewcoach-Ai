@@ -14,24 +14,33 @@ class jobDescriptionAnalyzer:
             temperature=0
         )
 
-        self.prompt_template = """You are an AI assistant. I provide you data of my resume like my name, skills, experience, projects, education.
-       I will provide you with a job description and you will compare it with my resume data and give me a score out of 100 based on how well my resume matches the job description.
-       
-       Resume Data:
-       {resume_data}
-       
-       Job Description:
-       {job_description}
-       
-       The score should be based on the following criteria:
-       1. Skills Match (40 points): How many of the required skills in the job description are present in the resume.
-       2. Experience Match (30 points): How well the candidate's experience aligns with the job requirements, including relevant job titles, companies, and durations.
-       3. Education Match (20 points): How well the candidate's educational background matches the job requirements, including degrees, institutions, and graduation years.
-       4. Project Match (10 points): How well the candidate's projects align with the job description, including relevance and complexity.
-       
-       Return the response in this format:
-       Score: [number between 0 and 100]
-       Explanation: [brief explanation of the score in 2-3 sentences, highlighting key strengths and weaknesses]"""
+        self.prompt_template = """You are a professional recruiter. Analyze the candidate's resume against the job description and provide a comprehensive assessment.
+
+RESUME:
+{resume_data}
+
+JOB DESCRIPTION:
+{job_description}
+
+ANALYSIS TASK:
+1. Extract MUST-HAVE requirements from job description (critical requirements)
+2. Extract NICE-TO-HAVE requirements (preferred but not critical)
+3. Compare resume against these requirements
+4. Assess eligibility and provide actionable feedback
+
+SCORING (0-100):
+- 90-100: Excellent fit (has almost all must-haves)
+- 70-89: Good fit (has most must-haves, some nice-to-haves)
+- 50-69: Moderate fit (has key must-haves, missing some)
+- 30-49: Poor fit (missing several must-haves)
+- 0-29: Very poor fit (major gaps in must-haves)
+
+RETURN FORMAT (EXACTLY):
+Score: [0-100]
+Eligible: [YES/PARTIAL/NO]
+Strengths: [2-3 bullet points of what resume has that matches job]
+Weaknesses: [2-3 bullet points of key missing skills/experience]
+Suggestions: [2-3 actionable recommendations to improve candidacy]"""
     
     def analyze(self):
         self.prompt = PromptTemplate(
@@ -43,18 +52,36 @@ class jobDescriptionAnalyzer:
         response = self.llm.invoke(final_prompt)
         content = response.content.strip()
         
+        # Parse Score
         score_match = re.search(r"Score:\s*(\d{1,3})", content)
-        explanation_match = re.search(r"Explanation:\s*(.*)", content, re.DOTALL)
-
         if score_match:
             score = int(score_match.group(1))
-            # Set minimum score of 10
-            score = max(score, 10)
+            score = max(0, min(score, 100))
         else:
-            raise ValueError("Could not extract a valid score from the response.")
-
-        explanation = explanation_match.group(1).strip() if explanation_match else "No explanation provided."
-
-        return {"score": score, "explanation": explanation}
+            raise ValueError("Could not extract score from response.")
+        
+        # Parse Eligible
+        eligible_match = re.search(r"Eligible:\s*(YES|PARTIAL|NO)", content, re.IGNORECASE)
+        eligible = eligible_match.group(1).upper() if eligible_match else "UNKNOWN"
+        
+        # Parse Strengths
+        strengths_match = re.search(r"Strengths:\s*(.*?)(?=Weaknesses:|$)", content, re.DOTALL)
+        strengths = strengths_match.group(1).strip() if strengths_match else "Not specified"
+        
+        # Parse Weaknesses
+        weaknesses_match = re.search(r"Weaknesses:\s*(.*?)(?=Suggestions:|$)", content, re.DOTALL)
+        weaknesses = weaknesses_match.group(1).strip() if weaknesses_match else "Not specified"
+        
+        # Parse Suggestions
+        suggestions_match = re.search(r"Suggestions:\s*(.*?)$", content, re.DOTALL)
+        suggestions = suggestions_match.group(1).strip() if suggestions_match else "Not specified"
+        
+        return {
+            "score": score,
+            "eligible": eligible,
+            "strengths": strengths,
+            "weaknesses": weaknesses,
+            "suggestions": suggestions
+        }
     
     
