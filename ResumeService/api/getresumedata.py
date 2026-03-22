@@ -1,6 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from utils.apiresponse import success_response,error_response
 from Models.resumeservice.resume_models import Resume_data
+from middlewares.auth_middleware import verify_jwt
 
 
 router=APIRouter(
@@ -10,7 +11,7 @@ router=APIRouter(
 
 
 @router.get("/resume/{resume_id}")
-async def get_resume(resume_id:str):
+async def get_resume(resume_id:str, user=Depends(verify_jwt)):
     try:
         resume=Resume_data.objects(id=resume_id).first()
         if not resume:

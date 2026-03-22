@@ -7,6 +7,7 @@ from AuthService.authservice.registerloginService import (
     SendOTP,
     VerifyOTP,
     CompleteRegistration,
+    ResendOTP,
 )
 
 router = APIRouter(
@@ -51,6 +52,26 @@ async def verify_otp(request: OTPVerificationRequest):
         return error_response(
             message=str(e),
             error_code="OTP_VERIFICATION_ERROR",
+            status_code=500
+        )
+
+
+@router.post("/resend-otp")
+async def resend_otp(request: OTPRequest):
+    try:
+        result = await ResendOTP(request.email)
+        return result
+    except APIError as e:
+        detail = e.detail if isinstance(e.detail, dict) else {}
+        return error_response(
+            message=detail.get("error", "Failed to resend OTP"),
+            error_code=detail.get("error_code", "OTP_RESEND_ERROR"),
+            status_code=e.status_code
+        )
+    except Exception as e:
+        return error_response(
+            message=str(e),
+            error_code="OTP_RESEND_ERROR",
             status_code=500
         )
 

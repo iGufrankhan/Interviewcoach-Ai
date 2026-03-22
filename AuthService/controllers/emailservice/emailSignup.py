@@ -77,6 +77,31 @@ async def verifyotp(email: str, otp: str):
     )
 
 
+async def resend_otp(email: str):
+    """Resend OTP to email if user is still in registration flow."""
+    user = User.objects(email=email).first()
+
+    # Do not reveal whether email exists.
+    if user:
+        return success_response(
+            message="If the email is eligible, OTP has been sent",
+            status_code=200
+        )
+
+    msg = await send_otp_email(email, purpose="registration")
+    if msg.get("status") != "success":
+        raise APIError(
+            status_code=500,
+            message=msg.get("message", "Failed to send OTP"),
+            error_code="OTP_SEND_FAILED"
+        )
+
+    return success_response(
+        message="If the email is eligible, OTP has been sent",
+        status_code=200
+    )
+
+
 async def complete_registration(email: str, password: str, fullname: str, registration_token: str):
     """Step 3: Complete registration only with verified registration token."""
     try:

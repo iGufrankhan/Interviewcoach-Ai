@@ -4,6 +4,7 @@ from AuthService.controllers.emailservice.emailSignup import (
     complete_registration,
 )
 from AuthService.controllers.emailservice.login_service import login_user
+from AuthService.controllers.emailservice.emailSignup import resend_otp
 
 
 async def SendOTP(email: str):
@@ -25,3 +26,8 @@ async def CompleteRegistration(email: str, password: str, fullname: str = "", re
 
 async def LoginUser(email: str, password: str):
     return await login_user(email, password)
+
+
+async def ResendOTP(email: str):
+   
+    return await resend_otp(email)

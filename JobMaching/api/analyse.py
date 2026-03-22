@@ -1,7 +1,8 @@
 import os
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from JobMaching.analyser.resumeanalise import JobMatchingService
 from utils.apierror import APIError
+from middlewares.auth_middleware import verify_jwt
 
 router = APIRouter(
     prefix="/api",
@@ -9,7 +10,7 @@ router = APIRouter(
 )
 
 @router.post("/analyseresume")
-async def analyse_resume(resume_id: str, description: str):
+async def analyse_resume(resume_id: str, description: str, user=Depends(verify_jwt)):
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         raise APIError(status_code=500, message="GROQ_API_KEY environment variable is not set", error_code="MISSING_API_KEY")

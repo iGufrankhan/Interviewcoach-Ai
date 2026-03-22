@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from interviewService.loader.get_data import InterviewDataLoader
 from utils.apierror import APIError
 from Models.resumeservice.resume_models import Resume_data
+from middlewares.auth_middleware import verify_jwt
 
 import os
 from interviewService.QuestionGenService.Questiongen import QuestionGen
@@ -14,7 +15,7 @@ router = APIRouter(
 
 
 @router.post("/generate")
-async def generate_questions(description: str, resume_id: str):
+async def generate_questions(description: str, resume_id: str, user=Depends(verify_jwt)):
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         raise APIError(status_code=400, message="API key is required", error_code="MISSING_API_KEY")
