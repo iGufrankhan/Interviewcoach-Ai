@@ -39,7 +39,13 @@ async def send_otp(request: OTPRequest):
 @router.post("/verify-otp")
 async def verify_otp(request: OTPVerificationRequest):
     try:
+        print(f"📨 Verify OTP request: email={request.email}, otp={request.otp}")
         result = await VerifyOTP(request.email, request.otp)
+        print(f"✅ VerifyOTP returned: {result}")
+        if isinstance(result, dict):
+            print(f"   Data keys: {result.get('data', {}).keys() if result.get('data') else 'NO DATA'}")
+            if result.get('data'):
+                print(f"   registration_token present: {'registration_token' in result['data']}")
         return result
     except APIError as e:
         detail = e.detail if isinstance(e.detail, dict) else {}
@@ -49,6 +55,7 @@ async def verify_otp(request: OTPVerificationRequest):
             status_code=e.status_code
         )
     except Exception as e:
+        print(f"❌ Verify OTP error: {str(e)}")
         return error_response(
             message=str(e),
             error_code="OTP_VERIFICATION_ERROR",
@@ -79,6 +86,11 @@ async def resend_otp(request: OTPRequest):
 @router.post("/complete-registration")
 async def complete_registration(request: UserSignupRequest):
     try:
+        print(f"📦 Received complete-registration request:")
+        print(f"   Email: {request.email}")
+        print(f"   Token: {request.registration_token[:20] if request.registration_token else 'EMPTY'}...")
+        print(f"   Token length: {len(request.registration_token) if request.registration_token else 0}")
+        
         result = await CompleteRegistration(
             request.email,
             request.password,

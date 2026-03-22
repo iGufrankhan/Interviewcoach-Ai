@@ -3,7 +3,7 @@ def create_resume_schema(resume_data):
         "id": str(resume_data.id),
         "name": resume_data.name,
         "skills": resume_data.skills,
-        "email": resume_data.email,
+        "email": resume_data.user.email,
         "experience": resume_data.experience,
         "education": resume_data.education,
         "projects": resume_data.projects,

@@ -26,7 +26,8 @@ async def login_user(email: str, password: str):
             error_code="EMAIL_NOT_VERIFIED"
         )
 
-    access_token = create_access_token(user_id=str(user.id))
+    # Create token with email as user_id (matching auth_middleware expectations)
+    access_token = create_access_token(user_id=str(user.email))
     return success_response(
         message="User logged in successfully",
         data={

@@ -1,5 +1,6 @@
 from datetime import datetime
 from passlib.context import CryptContext
+import logging
 
 from AuthService.controllers.emailservice.sendotp import send_otp_email
 from utils.token import create_access_token, verify_access_token
@@ -9,18 +10,21 @@ from utils.apiresponse import success_response
 from Models.userReg.user import User
 from Models.userReg.otp import OTP
 
+logger = logging.getLogger(__name__)
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 async def initializeemailsignup(email: str):
-    """Step 1: Send OTP to email (generic response to reduce account enumeration)."""
+    """Step 1: Send OTP to email or notify if user already exists."""
     user = User.objects(email=email).first()
 
-    # Do not reveal whether email exists.
+    # Check if user already exists
     if user:
         return success_response(
-            message="If the email is eligible, OTP has been sent",
-            status_code=200
+            message="User already exists with this email",
+            status_code=200,
+            data={"user_exists": True}
         )
 
     msg = await send_otp_email(email, purpose="registration")
@@ -32,19 +36,23 @@ async def initializeemailsignup(email: str):
         )
 
     return success_response(
-        message="If the email is eligible, OTP has been sent",
-        status_code=200
+        message="OTP has been sent",
+        status_code=200,
+        data={"user_exists": False}
     )
 
 
 async def verifyotp(email: str, otp: str):
     """Step 2: Verify OTP and return short-lived registration token."""
+    logger.info(f"🔐 Verifying OTP for email: {email}")
+    
     otp_entry = OTP.objects(
         email=email,
         purpose="registration"
     ).order_by("-created_at").first()
 
     if not otp_entry:
+        logger.error(f"❌ OTP entry not found for {email}")
         raise APIError(
             status_code=400,
             message="Invalid or expired OTP",
@@ -52,6 +60,7 @@ async def verifyotp(email: str, otp: str):
         )
 
     if otp_entry.expires_at < datetime.utcnow():
+        logger.error(f"❌ OTP expired for {email}")
         otp_entry.delete()
         raise APIError(
             status_code=400,
@@ -60,6 +69,7 @@ async def verifyotp(email: str, otp: str):
         )
 
     if otp_entry.otp != otp:
+        logger.error(f"❌ OTP mismatch for {email}. Got: {otp}, Expected: {otp_entry.otp}")
         raise APIError(
             status_code=400,
             message="Invalid or expired OTP",
@@ -67,8 +77,10 @@ async def verifyotp(email: str, otp: str):
         )
 
     otp_entry.delete()
+    logger.info(f"✅ OTP verified successfully for {email}")
 
     registration_token = create_access_token(user_id=f"reg:{email}")
+    logger.info(f"✅ Registration token created: {registration_token[:30]}...")
 
     return success_response(
         message="OTP verified successfully",
@@ -84,7 +96,7 @@ async def resend_otp(email: str):
     # Do not reveal whether email exists.
     if user:
         return success_response(
-            message="If the email is eligible, OTP has been sent",
+            message="OTP resent successfully",
             status_code=200
         )
 
@@ -97,16 +109,21 @@ async def resend_otp(email: str):
         )
 
     return success_response(
-        message="If the email is eligible, OTP has been sent",
+        message="otp resent successfully",
         status_code=200
     )
 
 
 async def complete_registration(email: str, password: str, fullname: str, registration_token: str):
     """Step 3: Complete registration only with verified registration token."""
+    logger.info(f"🔐 Attempting complete_registration for email: {email}")
+    logger.debug(f"📝 Token received (first 20 chars): {registration_token[:20] if registration_token else 'NONE'}...")
+    
     try:
         token_user_id = verify_access_token(registration_token)
-    except Exception:
+        logger.info(f"✅ Token verified successfully. User ID from token: {token_user_id}")
+    except Exception as e:
+        logger.error(f"❌ Token verification failed: {str(e)}")
         raise APIError(
             status_code=401,
             message="Invalid registration token",
@@ -114,6 +131,7 @@ async def complete_registration(email: str, password: str, fullname: str, regist
         )
 
     if not token_user_id or not token_user_id.startswith("reg:"):
+        logger.error(f"❌ Invalid token format. Expected 'reg:' prefix but got: {token_user_id}")
         raise APIError(
             status_code=401,
             message="Invalid registration token",
@@ -121,7 +139,10 @@ async def complete_registration(email: str, password: str, fullname: str, regist
         )
 
     token_email = token_user_id.replace("reg:", "", 1)
+    logger.debug(f"📧 Email from token: {token_email}, Email from request: {email}")
+    
     if token_email.lower() != email.lower():
+        logger.error(f"❌ Email mismatch! Token email: {token_email}, Request email: {email}")
         raise APIError(
             status_code=401,
             message="Registration token does not match email",
@@ -130,6 +151,7 @@ async def complete_registration(email: str, password: str, fullname: str, regist
 
     existing_user = User.objects(email=email).first()
     if existing_user:
+        logger.warning(f"⚠️  User already exists: {email}")
         raise APIError(
             status_code=409,
             message="Email already registered",
@@ -147,10 +169,18 @@ async def complete_registration(email: str, password: str, fullname: str, regist
         is_email_verified=True
     )
     new_user.save()
+    
+    logger.info(f"✅ User registered successfully! ID: {new_user.id}, Email: {email}")
+
+    # Generate access token for the newly registered user
+    access_token = create_access_token(user_id=str(new_user.email))
+    logger.info(f"✅ Access token generated for new user: {email}")
 
     return success_response(
         message="Registration completed successfully",
         data={
+            "access_token": access_token,
+            "user_id": str(new_user.id),
             "user": {
                 "id": str(new_user.id),
                 "email": new_user.email,

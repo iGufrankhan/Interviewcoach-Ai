@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends
 from utils.apiresponse import success_response,error_response
 from Models.resumeservice.resume_models import Resume_data
+from Models.userReg.user import User
 from middlewares.auth_middleware import verify_jwt
+import logging
 
+logger = logging.getLogger(__name__)
 
 router=APIRouter(
     prefix="/api",
@@ -10,30 +13,92 @@ router=APIRouter(
 )
 
 
+@router.get("/user-resumes/{user_id}")
+async def get_user_resumes(user_id: str, user=Depends(verify_jwt)):
+    """Get all resumes for a specific user"""
+    try:
+        # Use authenticated user's email, not URL parameter (security measure)
+        actual_user_id = user.email
+        logger.info(f"📋 Fetching resumes for user: {actual_user_id}")
+        
+        # Find user by email
+        user_obj = User.objects(email=actual_user_id).first()
+        if not user_obj:
+            logger.error(f"❌ User not found: {actual_user_id}")
+            return success_response(
+                message="No resumes found for this user",
+                data=[],
+                status_code=200
+            )
+        
+        # Query by user reference
+        resumes = Resume_data.objects(user=user_obj)
+        logger.info(f"✅ Found {len(resumes)} resume(s)")
+        
+        if not resumes:
+            return success_response(
+                message="No resumes found for this user",
+                data=[],
+                status_code=200
+            )
+        
+        resumes_list = []
+        for resume in resumes:
+            resume_dict = resume.to_mongo()
+            resume_dict["resume_id"] = str(resume_dict.pop("_id"))
+            # Convert user ObjectId to string
+            if "user" in resume_dict:
+                resume_dict["user_id"] = str(resume_dict["user"])
+                resume_dict.pop("user")
+            resume_dict["email"] = user_obj.email
+            if "created_at" in resume_dict:
+                resume_dict["created_at"] = resume_dict["created_at"].isoformat()
+            resumes_list.append(resume_dict)
+        
+        return success_response(
+            message="Resumes found",
+            data=resumes_list,
+            status_code=200
+        )
+    except Exception as e:
+        logger.error(f"❌ Error fetching resumes: {str(e)}", exc_info=True)
+        return error_response(
+            message=str(e),
+            error_code="GET_USER_RESUMES_ERROR",
+            status_code=500
+        )
+
 @router.get("/resume/{resume_id}")
 async def get_resume(resume_id:str, user=Depends(verify_jwt)):
     try:
+        logger.info(f"📄 Fetching resume: {resume_id}")
         resume=Resume_data.objects(id=resume_id).first()
         if not resume:
+            logger.warning(f"❌ Resume not found: {resume_id}")
             return error_response(
                 message="Resume Not Found",
-                error_code=" NOT_FOUND",
+                error_code="RESUME_NOT_FOUND",
                 status_code=404
             )
         resume_dict = resume.to_mongo()
         resume_dict["id"] = str(resume_dict.pop("_id"))
+        # Convert user ObjectId to string
+        if "user" in resume_dict:
+            resume_dict["user_id"] = str(resume_dict["user"])
+            resume_dict.pop("user")
+        resume_dict["email"] = resume.user.email
         if "created_at" in resume_dict:
             resume_dict["created_at"] = resume_dict["created_at"].isoformat()
+        logger.info(f"✅ Resume found: {resume_id}")
         return success_response(
             message="Resume found",
             data=resume_dict,
             status_code=200
         )
     except Exception as e:
+        logger.error(f"❌ Error fetching resume: {str(e)}", exc_info=True)
         return error_response(
             message=str(e),
             error_code="GET_ERROR",
             status_code=500
         )
-            
-           
