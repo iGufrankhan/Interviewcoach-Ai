@@ -66,22 +66,48 @@ Suggestions: [2-3 actionable recommendations to improve candidacy]"""
         
         # Parse Strengths
         strengths_match = re.search(r"Strengths:\s*(.*?)(?=Weaknesses:|$)", content, re.DOTALL)
-        strengths = strengths_match.group(1).strip() if strengths_match else "Not specified"
+        strengths_text = strengths_match.group(1).strip() if strengths_match else "Not specified"
+        strengths = self._parse_bullet_points(strengths_text)
         
-        # Parse Weaknesses
+        # Parse Weaknesses (Missing Skills)
         weaknesses_match = re.search(r"Weaknesses:\s*(.*?)(?=Suggestions:|$)", content, re.DOTALL)
-        weaknesses = weaknesses_match.group(1).strip() if weaknesses_match else "Not specified"
+        weaknesses_text = weaknesses_match.group(1).strip() if weaknesses_match else "Not specified"
+        missing_skills = self._parse_bullet_points(weaknesses_text)
         
         # Parse Suggestions
         suggestions_match = re.search(r"Suggestions:\s*(.*?)$", content, re.DOTALL)
-        suggestions = suggestions_match.group(1).strip() if suggestions_match else "Not specified"
+        suggestions_text = suggestions_match.group(1).strip() if suggestions_match else "Not specified"
+        suggestions = self._parse_bullet_points(suggestions_text)
+        
+        # Calculate component scores (percentages of overall score)
+        experience_fit = max(0, min(100, int(score * 1.1)))  # Slightly weighted
+        skills_match = score
         
         return {
-            "score": score,
+            "overallScore": score,
+            "experienceFit": experience_fit,
+            "skillsMatch": skills_match,
             "eligible": eligible,
             "strengths": strengths,
-            "weaknesses": weaknesses,
+            "missingSkills": missing_skills,
             "suggestions": suggestions
         }
     
-    
+    def _parse_bullet_points(self, text: str) -> list:
+        """Parse bullet points from text and return as list (max 5 items)"""
+        if not text or text == "Not specified":
+            return []
+        
+        # Split by common bullet point markers and newlines
+        points = re.split(r'[\n•\-*]', text)
+        
+        # Clean up: remove empty strings and items that are just numbers
+        cleaned_points = []
+        for p in points:
+            cleaned = p.strip()
+            # Skip empty strings and items that are just numbers (like "1.", "2.", etc.)
+            if cleaned and not re.match(r'^\d+\.?$', cleaned):
+                cleaned_points.append(cleaned)
+        
+        # Limit to 5 items maximum
+        return cleaned_points[:5] if cleaned_points else []

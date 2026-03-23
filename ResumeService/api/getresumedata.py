@@ -3,9 +3,6 @@ from utils.apiresponse import success_response,error_response
 from Models.resumeservice.resume_models import Resume_data
 from Models.userReg.user import User
 from middlewares.auth_middleware import verify_jwt
-import logging
-
-logger = logging.getLogger(__name__)
 
 router=APIRouter(
     prefix="/api",
@@ -19,12 +16,10 @@ async def get_user_resumes(user_id: str, user=Depends(verify_jwt)):
     try:
         # Use authenticated user's email, not URL parameter (security measure)
         actual_user_id = user.email
-        logger.info(f"📋 Fetching resumes for user: {actual_user_id}")
         
         # Find user by email
         user_obj = User.objects(email=actual_user_id).first()
         if not user_obj:
-            logger.error(f"❌ User not found: {actual_user_id}")
             return success_response(
                 message="No resumes found for this user",
                 data=[],
@@ -33,7 +28,6 @@ async def get_user_resumes(user_id: str, user=Depends(verify_jwt)):
         
         # Query by user reference
         resumes = Resume_data.objects(user=user_obj)
-        logger.info(f"✅ Found {len(resumes)} resume(s)")
         
         if not resumes:
             return success_response(
@@ -61,7 +55,6 @@ async def get_user_resumes(user_id: str, user=Depends(verify_jwt)):
             status_code=200
         )
     except Exception as e:
-        logger.error(f"❌ Error fetching resumes: {str(e)}", exc_info=True)
         return error_response(
             message=str(e),
             error_code="GET_USER_RESUMES_ERROR",
@@ -71,10 +64,8 @@ async def get_user_resumes(user_id: str, user=Depends(verify_jwt)):
 @router.get("/resume/{resume_id}")
 async def get_resume(resume_id:str, user=Depends(verify_jwt)):
     try:
-        logger.info(f"📄 Fetching resume: {resume_id}")
         resume=Resume_data.objects(id=resume_id).first()
         if not resume:
-            logger.warning(f"❌ Resume not found: {resume_id}")
             return error_response(
                 message="Resume Not Found",
                 error_code="RESUME_NOT_FOUND",
@@ -89,14 +80,12 @@ async def get_resume(resume_id:str, user=Depends(verify_jwt)):
         resume_dict["email"] = resume.user.email
         if "created_at" in resume_dict:
             resume_dict["created_at"] = resume_dict["created_at"].isoformat()
-        logger.info(f"✅ Resume found: {resume_id}")
         return success_response(
             message="Resume found",
             data=resume_dict,
             status_code=200
         )
     except Exception as e:
-        logger.error(f"❌ Error fetching resume: {str(e)}", exc_info=True)
         return error_response(
             message=str(e),
             error_code="GET_ERROR",
