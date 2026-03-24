@@ -11,16 +11,25 @@ router=APIRouter(
 )
 
 
-@router.delete("/resume/{resume_id}")
+@router.delete("/delete-resume/{resume_id}")
 async def delete_resume(resume_id:str, user=Depends(verify_jwt)):
     try:
         resume=Resume_data.objects(id=resume_id).first()
         if not resume:
             return error_response(
                 message="Resume Not Found",
-                error_code=" NOT_FOUND",
+                error_code="NOT_FOUND",
                 status_code=404
             )
+        
+        # Verify the resume belongs to the authenticated user
+        if str(resume.user.id) != str(user.id):
+            return error_response(
+                message="Unauthorized - Resume does not belong to you",
+                error_code="UNAUTHORIZED",
+                status_code=403
+            )
+        
         resume.delete()
         return success_response(
             message="Resume deleted successfully",

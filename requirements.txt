@@ -13,5 +13,6 @@ email-validator
 python-jose[cryptography]
 fastapi-mail
 beautifulsoup4
+slowapi>=0.1.9
 
 

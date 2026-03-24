@@ -22,7 +22,7 @@ async def initializeemailsignup(email: str):
     # Check if user already exists
     if user:
         return error_response(
-            message="User already exists with this email",
+            message="Setup failed. Please try again.",
             status_code=200,
             data={"user_exists": True}
         )
@@ -140,7 +140,7 @@ async def complete_registration(email: str, password: str, fullname: str, regist
     if existing_user:
         raise APIError(
             status_code=409,
-            message="Email already registered",
+            message="Setup failed. Please try again.",
             error_code="EMAIL_EXISTS"
         )
 
