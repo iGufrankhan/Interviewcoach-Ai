@@ -14,5 +14,6 @@ python-jose[cryptography]
 fastapi-mail
 beautifulsoup4
 slowapi>=0.1.9
-
+faiss-cpu>=1.7.4
+sentence-transformers>=2.2.0
 

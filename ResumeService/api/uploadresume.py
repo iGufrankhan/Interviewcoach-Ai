@@ -22,12 +22,12 @@ if not os.getenv("GROQ_API_KEY"):
 groq_api_key = os.getenv("GROQ_API_KEY")
 
 
-@router.post("/upload-resume/{user_id}")
-async def upload_resume(user_id: str, file: UploadFile = File(...), user=Depends(verify_jwt)):
-    """Upload and process resume for a user - Requires authentication"""
+@router.post("/upload-resume")
+async def upload_resume(file: UploadFile = File(...), user=Depends(verify_jwt)):
+    """Upload and process resume for authenticated user - Requires authentication"""
     
-    # Use authenticated user's email, not URL parameter (security measure)
-    actual_user_id = user.email
+    # Use authenticated user's email
+    actual_user_email = user.email
     
     # Validate file extension
     if not validate_file_extension(file.filename):
@@ -42,7 +42,7 @@ async def upload_resume(user_id: str, file: UploadFile = File(...), user=Depends
         resume_service = ResumeService(
             upload_dir="uploads",
             groq_api_key=groq_api_key,
-            user_id=actual_user_id
+            user_id=actual_user_email
         )
         
         # Process resume (extracts data)

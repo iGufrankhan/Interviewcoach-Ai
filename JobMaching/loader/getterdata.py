@@ -22,13 +22,30 @@ class CompareService:
             if resume_doc is None:
                 raise APIError(status_code=400, message=f"Resume not found for ID: {self.resume_id}", error_code="RESUME_NOT_FOUND")
             
+            # Extract resume data with null checks - use empty string as default
             resume_data = {
-                "name": resume_doc.name,
-                "skills": resume_doc.skills,
-                "experience": resume_doc.experience,
-                "education": resume_doc.education,
-                "projects": resume_doc.projects
+                "name": resume_doc.name or "",
+                "skills": resume_doc.skills or [],
+                "experience": resume_doc.experience or "",
+                "education": resume_doc.education or "",
+                "projects": resume_doc.projects or []
             }
+            
+            # Validate that at least some data exists
+            has_content = any([
+                resume_data.get("name"),
+                resume_data.get("skills"),
+                resume_data.get("experience"),
+                resume_data.get("education"),
+                resume_data.get("projects")
+            ])
+            
+            if not has_content:
+                raise APIError(
+                    status_code=400,
+                    message="Resume has no content to analyze",
+                    error_code="EMPTY_RESUME_DATA"
+                )
         except Exception as e:
             raise APIError(status_code=400, message=f"Failed to load resume data: {str(e)}", error_code="RESUME_LOADING_FAILED")
         

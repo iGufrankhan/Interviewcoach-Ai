@@ -9,8 +9,8 @@ class jobDescriptionAnalyzer:
         self.resume_data = resume_data
         self.job_description = job_description
         self.llm = ChatGroq(
-            model_name="llama-3.1-8b-instant",
-            groq_api_key=api_key,
+            model="llama-3.1-8b-instant",
+            api_key=api_key,
             temperature=0
         )
 
@@ -23,24 +23,28 @@ JOB DESCRIPTION:
 {job_description}
 
 ANALYSIS TASK:
-1. Extract MUST-HAVE requirements from job description (critical requirements)
-2. Extract NICE-TO-HAVE requirements (preferred but not critical)
-3. Compare resume against these requirements
-4. Assess eligibility and provide actionable feedback
+1. Extract MUST-HAVE requirements from job description
+2. Compare resume against requirements
+3. Provide actionable feedback
 
 SCORING (0-100):
-- 90-100: Excellent fit (has almost all must-haves)
-- 70-89: Good fit (has most must-haves, some nice-to-haves)
-- 50-69: Moderate fit (has key must-haves, missing some)
-- 30-49: Poor fit (missing several must-haves)
-- 0-29: Very poor fit (major gaps in must-haves)
+- 90-100: Excellent fit
+- 70-89: Good fit
+- 50-69: Moderate fit
+- 30-49: Poor fit
+- 0-29: Very poor fit
 
-RETURN FORMAT (EXACTLY):
+RETURN FORMAT (EACH ON ITS OWN LINE):
 Score: [0-100]
 Eligible: [YES/PARTIAL/NO]
-Strengths: [2-3 bullet points of what resume has that matches job]
-Weaknesses: [2-3 bullet points of key missing skills/experience]
-Suggestions: [2-3 actionable recommendations to improve candidacy]"""
+Strengths: [strength 1] | [strength 2] | [strength 3] | [strength 4] | [strength 5]
+Weaknesses: [weakness 1] | [weakness 2] | [weakness 3] | [weakness 4] | [weakness 5]
+Suggestions:
+1. [First specific actionable suggestion for improvement]
+2. [Second specific actionable suggestion for improvement]
+3. [Third specific actionable suggestion for improvement]
+4. [Fourth specific actionable suggestion for improvement]
+5. [Fifth specific actionable suggestion for improvement]"""
     
     def analyze(self):
         self.prompt = PromptTemplate(
@@ -52,7 +56,6 @@ Suggestions: [2-3 actionable recommendations to improve candidacy]"""
         response = self.llm.invoke(final_prompt)
         content = response.content.strip()
         
-        # Parse Score
         score_match = re.search(r"Score:\s*(\d{1,3})", content)
         if score_match:
             score = int(score_match.group(1))
@@ -60,27 +63,22 @@ Suggestions: [2-3 actionable recommendations to improve candidacy]"""
         else:
             raise ValueError("Could not extract score from response.")
         
-        # Parse Eligible
         eligible_match = re.search(r"Eligible:\s*(YES|PARTIAL|NO)", content, re.IGNORECASE)
         eligible = eligible_match.group(1).upper() if eligible_match else "UNKNOWN"
         
-        # Parse Strengths
-        strengths_match = re.search(r"Strengths:\s*(.*?)(?=Weaknesses:|$)", content, re.DOTALL)
-        strengths_text = strengths_match.group(1).strip() if strengths_match else "Not specified"
-        strengths = self._parse_bullet_points(strengths_text)
+        # Extract strengths - pipe separated
+        strengths_match = re.search(r"Strengths:\s*([^\n]+)", content)
+        strengths = self._parse_pipe_separated(strengths_match.group(1)) if strengths_match else []
         
-        # Parse Weaknesses (Missing Skills)
-        weaknesses_match = re.search(r"Weaknesses:\s*(.*?)(?=Suggestions:|$)", content, re.DOTALL)
-        weaknesses_text = weaknesses_match.group(1).strip() if weaknesses_match else "Not specified"
-        missing_skills = self._parse_bullet_points(weaknesses_text)
+        # Extract weaknesses - pipe separated
+        weaknesses_match = re.search(r"Weaknesses:\s*([^\n]+)", content)
+        missing_skills = self._parse_pipe_separated(weaknesses_match.group(1)) if weaknesses_match else []
         
-        # Parse Suggestions
-        suggestions_match = re.search(r"Suggestions:\s*(.*?)$", content, re.DOTALL)
-        suggestions_text = suggestions_match.group(1).strip() if suggestions_match else "Not specified"
-        suggestions = self._parse_bullet_points(suggestions_text)
+        # Extract suggestions - numbered list
+        suggestions_match = re.search(r"Suggestions:\s*(.*?)(?:^[A-Z]|\Z)", content, re.MULTILINE | re.DOTALL)
+        suggestions = self._parse_numbered_suggestions(suggestions_match.group(1)) if suggestions_match else []
         
-        # Calculate component scores (percentages of overall score)
-        experience_fit = max(0, min(100, int(score * 1.1)))  # Slightly weighted
+        experience_fit = max(0, min(100, int(score * 1.1)))
         skills_match = score
         
         return {
@@ -93,21 +91,35 @@ Suggestions: [2-3 actionable recommendations to improve candidacy]"""
             "suggestions": suggestions
         }
     
-    def _parse_bullet_points(self, text: str) -> list:
-        """Parse bullet points from text and return as list (max 5 items)"""
-        if not text or text == "Not specified":
+    def _parse_pipe_separated(self, text: str) -> list:
+        """Parse pipe-separated items and return as list (max 5 items)"""
+        if not text or text.strip() == "":
             return []
         
-        # Split by common bullet point markers and newlines
-        points = re.split(r'[\n•\-*]', text)
+        # Split by pipe
+        items = text.split('|')
         
-        # Clean up: remove empty strings and items that are just numbers
-        cleaned_points = []
-        for p in points:
-            cleaned = p.strip()
-            # Skip empty strings and items that are just numbers (like "1.", "2.", etc.)
-            if cleaned and not re.match(r'^\d+\.?$', cleaned):
-                cleaned_points.append(cleaned)
+        cleaned_items = []
+        for item in items:
+            cleaned = item.strip()
+            if cleaned and len(cleaned) > 3:
+                cleaned_items.append(cleaned)
         
-        # Limit to 5 items maximum
-        return cleaned_points[:5] if cleaned_points else []
+        return cleaned_items[:5]
+    
+    def _parse_numbered_suggestions(self, text: str) -> list:
+        """Parse numbered suggestions (1., 2., etc.) and return as list (max 5 items)"""
+        if not text or text.strip() == "":
+            return []
+        
+        # Find all numbered items like "1. suggestion text" or "1) suggestion text"
+        pattern = r'^\d+[\.\)]\s+(.+?)$'
+        matches = re.findall(pattern, text, re.MULTILINE)
+        
+        cleaned_items = []
+        for match in matches:
+            cleaned = match.strip()
+            if cleaned and len(cleaned) > 5:
+                cleaned_items.append(cleaned)
+        
+        return cleaned_items[:5]

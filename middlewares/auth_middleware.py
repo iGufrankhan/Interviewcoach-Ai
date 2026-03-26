@@ -1,4 +1,4 @@
-from fastapi import Request
+from fastapi import Request, HTTPException, status
 import logging
 from utils.apierror import APIError
 from Models.userReg.user import User
@@ -49,5 +49,46 @@ async def verify_jwt(request: Request):
         )
 
   
+    request.state.user = user
+    return user
+
+
+async def get_current_user(request: Request):
+    """
+    Get current authenticated user from request.
+    
+    Protection layers:
+    - Token extraction from cookies or Authorization header
+    - Token validation
+    - User existence check
+    """
+    token = request.cookies.get("accessToken") or _extract_bearer_token(
+        request.headers.get("Authorization")
+    )
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id = verify_access_token(token)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # user_id contains the email since we store email in the token
+    user = User.objects(email=user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     request.state.user = user
     return user

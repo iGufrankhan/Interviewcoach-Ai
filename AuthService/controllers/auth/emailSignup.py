@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from passlib.context import CryptContext
 import logging
 
@@ -56,7 +56,7 @@ async def verifyotp(email: str, otp: str):
             error_code="OTP_INVALID_OR_EXPIRED"
         )
 
-    if otp_entry.expires_at < datetime.utcnow():
+    if otp_entry.expires_at < datetime.now(timezone.utc).replace(tzinfo=None):
         otp_entry.delete()
         raise APIError(
             status_code=400,

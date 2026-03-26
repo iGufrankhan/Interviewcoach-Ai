@@ -10,15 +10,15 @@ router=APIRouter(
 )
 
 
-@router.get("/user-resumes/{user_id}")
-async def get_user_resumes(user_id: str, user=Depends(verify_jwt)):
-    """Get all resumes for a specific user"""
+@router.get("/user-resumes")
+async def get_user_resumes(user=Depends(verify_jwt)):
+    """Get all resumes for the authenticated user"""
     try:
-        # Use authenticated user's email, not URL parameter (security measure)
-        actual_user_id = user.email
+        # Use authenticated user's email
+        actual_user_email = user.email
         
         # Find user by email
-        user_obj = User.objects(email=actual_user_id).first()
+        user_obj = User.objects(email=actual_user_email).first()
         if not user_obj:
             return success_response(
                 message="No resumes found for this user",

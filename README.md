@@ -18,7 +18,14 @@ An intelligent FastAPI-based application that helps candidates prepare for inter
 - Leverages both job description and resume data for relevance
 - Helps candidates prepare for role-specific scenarios
 
-### 3. **Comprehensive Candidate Profiling**
+### 3. **Smart Chat Assistant**
+- Memory-aware AI chatbot for career guidance and interview preparation
+- Maintains conversation history across sessions (persistent storage)
+- Leverages Groq's Llama 3.1 for fast, intelligent responses
+- Real-time chat widget with typing indicators
+- Floating widget interface on dashboard for easy access
+
+### 4. **Comprehensive Candidate Profiling**
 - Store and manage candidate resumes
 - Track skills, experience, education, and projects
 - Support for multiple resume versions per user
@@ -47,8 +54,8 @@ An intelligent FastAPI-based application that helps candidates prepare for inter
 │   ├── loader/
 │   │   └── job_descpLoad.py       # Job description processing
 │   └── resumeCompare/
-│       ├── getterdata.py          # Data aggregation
-│       └── llmcompare.py          # LLM-based comparison
+│       ├── llmcompare.py          # LLM-based comparison
+│       └── llmcompare_rag.py      # RAG-based comparison
 
 ├── interviewService/              # Interview Question Generation
 │   ├── api/
@@ -57,6 +64,14 @@ An intelligent FastAPI-based application that helps candidates prepare for inter
 │   │   └── Questiongen.py         # Question generation logic
 │   └── loader/
 │       └── get_data.py            # Data loading
+
+├── chat_agent/                    # AI Chat Assistant
+│   ├── api/
+│   │   └── chatBot.py            # POST /api/chat/* endpoints
+│   ├── chatBotService/
+│   │   └── chatBotservice.py     # ChatBotService with memory
+│   └── schema/
+│       └── chatBot.py            # Chat request/response models
 
 ├── ResumeService/                 # Resume Management
 │   ├── api/
@@ -72,12 +87,14 @@ An intelligent FastAPI-based application that helps candidates prepare for inter
 │   ├── userReg/
 │   │   ├── user.py               # User model
 │   │   └── otp.py                # OTP model
-│   └── resumeservice/
-│       ├── resume_models.py
-│       └── resumeschema.py
+│   ├── resumeservice/
+│   │   ├── resume_models.py
+│   │   └── resumeschema.py
+│   └── chat_bot/
+│       └── chat_bot.py           # ChatSession & ChatMessage models
 
 ├── middlewares/                  # Custom middleware
-│   └── auth.middleware.py
+│   └── auth_middleware.py
 
 ├── Dbconfig/                     # Database configuration
 │   └── config.py
@@ -86,6 +103,19 @@ An intelligent FastAPI-based application that helps candidates prepare for inter
 │   ├── apierror.py              # Custom error handling
 │   ├── apiresponse.py           # Response formatting
 │   └── token.py                 # JWT token utilities
+
+├── Frontend/                     # Next.js React Frontend
+│   ├── app/
+│   │   ├── chatbot/
+│   │   │   ├── ChatWidget.tsx   # Chat widget component
+│   │   │   └── chatWidget.module.css
+│   │   ├── dashboard/
+│   │   └── ...
+│   ├── lib/
+│   │   ├── chat/
+│   │   │   └── chatApi.ts       # Chat API client
+│   │   └── ...
+│   └── ...
 
 ├── app.py                        # Main FastAPI application
 └── requirements.txt              # Project dependencies
@@ -172,6 +202,56 @@ GET    /resume/get/{resume_id}  # Get resume data
 DELETE /resume/delete/{id}      # Delete resume
 ```
 
+### Chat Agent (AI Assistant)
+```
+POST   /api/chat/create-session    # Create new chat session
+POST   /api/chat/send-message      # Send message and get AI response
+GET    /api/chat/sessions          # Get all user chat sessions
+GET    /api/chat/session/{id}      # Get chat history for session
+```
+
+**Chat Features:**
+- ✅ Memory-aware conversation history
+- ✅ Persistent storage in MongoDB
+- ✅ Auto-loads previous sessions on login
+- ✅ Real-time floating widget on dashboard
+- ✅ Powered by Groq's Llama 3.1 8B Instant
+
+**Create Session Example:**
+```bash
+POST /api/chat/create-session
+Authorization: Bearer {jwt_token}
+```
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "session_id": "65a1b2c3d4e5f6g7h8i9"
+  }
+}
+```
+
+**Send Message Example:**
+```bash
+POST /api/chat/send-message
+Authorization: Bearer {jwt_token}
+
+{
+  "session_id": "65a1b2c3d4e5f6g7h8i9",
+  "message": "My name is Gufran Khan. What skills should I focus on?"
+}
+```
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "response": "Hi Gufran! Based on current market trends, I'd recommend focusing on..."
+  }
+}
+```
+
 ### Resume-Job Matching (Job Matching Service)
 ```
 POST   /api/analyseresume
@@ -229,17 +309,18 @@ POST   /question_gen/generate
 
 ## 📊 Workflow Example
 
-### Step 1: Upload Resume
+### Step 1: Register & Login
+```bash
+POST /auth/register
+POST /auth/login
+- Get JWT token for authentication
+```
+
+### Step 2: Upload Resume
 ```bash
 POST /resume/upload
 - Upload your resume (PDF/DOCX)
 - System extracts: skills, experience, education, projects
-```
-
-### Step 2: Get Resume ID
-```bash
-GET /resume/get/{user_id}
-- Returns: resume_id for use in other endpoints
 ```
 
 ### Step 3: Analyze Job Match
@@ -274,6 +355,25 @@ POST /question_gen/generate
 Response: 10 targeted interview questions
 ```
 
+### Step 5: Practice with AI Assistant
+```bash
+1. Create Chat Session
+   POST /api/chat/create-session
+   Response: { "session_id": "..." }
+
+2. Send Practice Questions
+   POST /api/chat/send-message
+   {
+     "session_id": "...",
+     "message": "Can you ask me one of those interview questions?"
+   }
+
+3. Get Feedback
+   - AI asks questions and provides feedback
+   - Conversation history is saved for future reference
+   - Logout/login preserves your chat history
+```
+
 ---
 
 ## 🧠 AI/LLM Features
@@ -289,6 +389,19 @@ Response: 10 targeted interview questions
 - **Approach**: Job description prioritization with resume context
 - **Output**: 10 unique, role-specific interview questions
 - **Quality**: Targets technical depth and practical scenarios
+
+#### Chat Assistant Features
+- **Memory Type**: Persistent conversation history with MongoDB storage
+- **Conversation Aware**: Remembers user information across sessions
+- **Session Management**: Auto-loads previous sessions on login
+- **Architecture**: LangChain RunnableWithMessageHistory with MongoDB backend
+- **Response Time**: Sub-second responses via Groq API
+- **Use Cases**:
+  - Career guidance and skill recommendations
+  - Mock interview practice
+  - Interview question explanations
+  - Resume improvement suggestions
+  - Behavioral question preparation
 
 ---
 
@@ -407,12 +520,68 @@ Verify: Python path includes project directory
 
 ---
 
-## 📈 Performance Tips
+## � Chat Assistant (AI Helper)
+
+### Features
+- **Memory Aware**: Remembers user information and conversation history
+- **Persistent Storage**: All conversations stored in MongoDB
+- **Session Management**: 
+  - Create new chat sessions
+  - Auto-load previous sessions on login
+  - Retrieve full conversation history
+- **Real-time Responses**: Powered by Groq's Llama 3.1 8B Instant model
+- **Floating Widget**: Accessible from dashboard via floating button
+
+### Technical Architecture
+- **Backend**: FastAPI + LangChain with MongoEngine models
+- **Memory**: RunnableWithMessageHistory for conversation context
+- **Storage**: MongoDB collections (chat_sessions, chat_messages)
+- **Frontend**: React component with real-time UI updates
+- **Authentication**: JWT-protected endpoints
+
+### How It Works
+1. User opens chat widget on dashboard
+2. System loads most recent chat session (if exists)
+3. Previous conversation history is displayed
+4. User can continue conversation with full context awareness
+5. All messages saved to MongoDB automatically
+6. Even after logout/login, conversation history persists
+
+### Database Models
+
+**ChatSession**
+```python
+{
+  _id: ObjectId,
+  user_id: String,        # Email
+  email: String,
+  title: String,          # "Chat Session"
+  created_at: DateTime,
+  updated_at: DateTime
+}
+```
+
+**ChatMessage**
+```python
+{
+  _id: ObjectId,
+  session_id: String,     # Reference to ChatSession
+  role: String,           # "user" or "assistant"
+  content: String,        # Message content
+  timestamp: DateTime
+}
+```
+
+---
+
+## �📈 Performance Tips
 
 1. **Resume Upload**: Keep files < 5MB for faster processing
 2. **Job Description**: 500-2000 characters optimal length
 3. **Batch Requests**: Limit concurrent API calls to 5-10/second
-4. **Caching**: Consider caching frequently matched job descriptions
+4. **Chat Sessions**: Limit conversation length to ~100 messages per session
+5. **Caching**: Consider caching frequently matched job descriptions
+6. **Database**: Ensure MongoDB indexes on session_id and user_id for fast queries
 
 ---
 
@@ -445,6 +614,12 @@ This project is proprietary. All rights reserved.
 
 ## 🎯 Roadmap
 
+- [x] Resume analysis & job matching
+- [x] Interview question generation
+- [x] User authentication
+- [x] Resume management
+- [x] Email verification & OTP
+- [x] AI Chat Assistant with memory
 - [ ] Support for multiple resume versions per user
 - [ ] Resume parsing improvements (PDF, DOCX formatting)
 - [ ] Interview mock sessions with real-time feedback
@@ -453,20 +628,29 @@ This project is proprietary. All rights reserved.
 - [ ] Multi-language support
 - [ ] Mobile app
 - [ ] Interview video recording and analysis
+- [ ] Advanced resume templates
+- [ ] Salary negotiation guidance
 
 ---
 
 ## 🔄 Version History
 
-### v1.0.0 (Current)
+### v1.1.0 (Current)
+- ✅ AI Chat Assistant with memory awareness
+- ✅ Persistent conversation history (MongoDB)
+- ✅ Auto-load previous sessions on login
+- ✅ Floating chat widget on dashboard
+- ✅ Real-time responses via Groq Llama 3.1
+
+### v1.0.0
 - ✅ Resume analysis & job matching
 - ✅ Interview question generation
-- ✅ User authentication
+- ✅ User authentication & JWT
 - ✅ Resume management
 - ✅ Email verification & OTP
 
 ---
 
-**Last Updated**: March 19, 2026
+**Last Updated**: March 26, 2026
 
 **Maintainer**: Interview Coach AI Team
