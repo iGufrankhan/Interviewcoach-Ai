@@ -3,9 +3,8 @@ load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-import Dbconfig.config 
+import Dbconfig.config
+
 from ResumeService.api.uploadresume import router as resume_router
 from ResumeService.api.getresumedata import router as update_router
 from ResumeService.api.deleteresume import router as delete_router
@@ -14,7 +13,8 @@ from AuthService.api.login_api import router as login_router
 from AuthService.api.resetpassword_api import api_router as resetpassword_router
 from JobMaching.api.analyse import router as analyse_router
 from interviewService.api.question_gen import router as question_gen_router
-from chat_agent.api.chatBot import router as chat_router  # ADD THIS LINE
+from chat_agent.api.chatBot import router as chat_router  
+from interviewService.api.interview_flow import router as interview_flow_router
 
 app = FastAPI()
 
@@ -42,10 +42,8 @@ app.include_router(update_router, prefix="/resume")
 app.include_router(delete_router, prefix="/resume")
 app.include_router(analyse_router, prefix="/jobmatching")
 app.include_router(question_gen_router, prefix="/interviewservice")
-app.include_router(chat_router) 
-
-limiter = Limiter(key_func=get_remote_address)
-app.state.limiter = limiter
+app.include_router(chat_router)
+app.include_router(interview_flow_router)
 
 
 # ============ Health Check & Utility Routes ============
@@ -89,7 +87,10 @@ async def api_status():
                 "analyze": "/jobmatching/analyse"
             },
             "interview": {
-                "question_gen": "/interviewservice/generate-questions"
+                "question_gen": "/interviewservice/generate-questions",
+                "start": "/interviewflow/start",
+                "submit-answer": "/interviewflow/submit-answer",
+                "submit": "/interviewflow/submit"
             }
         }
     }

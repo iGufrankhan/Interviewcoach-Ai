@@ -18,7 +18,7 @@ class QuestionGen:
 **CRITICAL INSTRUCTIONS:**
 1. Look for the section marked "==================== JOB INFORMATION ===================="
 2. Extract: role, required skills, experience level, responsibilities, qualifications
-3. Generate 10 UNIQUE questions based ONLY on this job description
+3. Generate 2 UNIQUE questions based ONLY on this job description
 4. Use the CANDIDATE RESUME section only to:
    - Create follow-up questions if resume shows skill mismatches
    - Ask about relevant experience from the candidate's background
@@ -32,7 +32,7 @@ class QuestionGen:
   * Relevant past work examples
   * Ability to handle job responsibilities
 - Format: numbered list (1. Question here, 2. Question here, etc)
-- Only return the 10 numbered questions - no explanations, preamble, or additional text
+- Only return the 2 numbered questions - no explanations, preamble, or additional text
 
 CONTEXT:
 {context}

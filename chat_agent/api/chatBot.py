@@ -42,6 +42,14 @@ async def send_message(request: SendMessageRequest, user=Depends(verify_jwt)):
         api_key = os.getenv("GROQ_API_KEY")
         service = ChatBotService(api_key, user.email)
         
+        # Validate user owns this session
+        if not service.validate_session_ownership(request.session_id):
+            return error_response(
+                message="Unauthorized: Session not found or does not belong to user",
+                error_code="UNAUTHORIZED_SESSION",
+                status_code=403
+            )
+        
         response = service.send_message(request.session_id, request.message)
         
         return success_response(
@@ -86,10 +94,18 @@ async def get_session_history(session_id: str, user=Depends(verify_jwt)):
         api_key = os.getenv("GROQ_API_KEY")
         service = ChatBotService(api_key, user.email)
         
+        # Validate user owns this session
+        if not service.validate_session_ownership(session_id):
+            return error_response(
+                message="Unauthorized: Session not found or does not belong to user",
+                error_code="UNAUTHORIZED_SESSION",
+                status_code=403
+            )
+        
         history = service.get_session_history(session_id)
         messages = [
             {
-                "role": msg.type,
+                "role": msg.role,
                 "content": msg.content
             }
             for msg in history.messages
