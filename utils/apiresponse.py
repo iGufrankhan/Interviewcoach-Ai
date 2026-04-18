@@ -19,13 +19,15 @@ def success_response(
 def error_response(
     message: str = "Error",
     error_code: str = None,
-    status_code: int = 400
+    status_code: int = 400,
+    data=None
 ):
     return JSONResponse(
         status_code=status_code,
         content={
             "success": False,
             "message": message,
-            "error_code": error_code
+            "error_code": error_code,
+            "data": data
         }
     )

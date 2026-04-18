@@ -1,5 +1,6 @@
 
 import hashlib
+import json
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -49,11 +50,13 @@ class RagData:
             FAISS retriever for semantic search on resume data
         """
         try:
-            # Create hash of resume data for caching
-            resume_hash = hashlib.md5(str(self.resume_data).encode()).hexdigest()
+            # Create stable hash of resume data for caching (sorted JSON to ensure consistency)
+            resume_json = json.dumps(self.resume_data, sort_keys=True, default=str)
+            resume_hash = hashlib.md5(resume_json.encode()).hexdigest()
             
             # Check if already computed and cached
             if resume_hash in self._cache:
+                print(f"[RAG] Cache HIT for resume hash: {resume_hash}. Reusing cached FAISS index.")
                 return self._cache[resume_hash]
             
             text_splitter = RecursiveCharacterTextSplitter(
@@ -91,6 +94,7 @@ class RagData:
             
             # Cache the retriever for future use
             self._cache[resume_hash] = retriever
+            print(f"[RAG] Cached FAISS index for resume hash: {resume_hash}. Cache size: {len(self._cache)}. Total documents indexed: {len(documents)}")
             
             return retriever
             
@@ -133,6 +137,20 @@ class RagData:
                 text_parts.append(f"Projects: {projects}")
         
         return "\n".join(text_parts)
+    
+    @classmethod
+    def get_cache_status(cls):
+        """Get cache status for debugging"""
+        return {
+            "cache_size": len(cls._cache),
+            "cached_hashes": list(cls._cache.keys())
+        }
+    
+    @classmethod
+    def clear_cache(cls):
+        """Clear all cached retrievers - use for testing or memory management"""
+        cls._cache.clear()
+        print("[RAG] Cache cleared successfully")
         
         
         

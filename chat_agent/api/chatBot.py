@@ -102,14 +102,8 @@ async def get_session_history(session_id: str, user=Depends(verify_jwt)):
                 status_code=403
             )
         
-        history = service.get_session_history(session_id)
-        messages = [
-            {
-                "role": msg.role,
-                "content": msg.content
-            }
-            for msg in history.messages
-        ]
+        # Get messages directly from MongoDB
+        messages = service.get_session_messages(session_id, limit=100)
         
         return success_response(
             message="Chat history retrieved",

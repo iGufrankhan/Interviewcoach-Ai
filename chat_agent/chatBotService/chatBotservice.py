@@ -8,8 +8,9 @@ from langchain_core.messages import HumanMessage, AIMessage
 from Models.chat_bot.chat_bot import ChatSession, ChatMessage
 from Models.resumeservice.resume_models import Resume_data
 from Models.userReg.user import User
-from datetime import datetime
+from datetime import datetime, timedelta
 from utils.apierror import APIError
+from typing import List, Dict, Optional
 
 
 class ChatBotService:
@@ -57,14 +58,93 @@ class ChatBotService:
             print(f"Error validating session: {e}")
             return False
     
+    def search_messages(self, keywords: List[str], session_id: Optional[str] = None, limit: int = 5) -> List[Dict]:
+        """Search messages in MongoDB by keywords"""
+        try:
+            query = {}
+            if session_id:
+                query["session_id"] = session_id
+            else:
+                query["email"] = self.user_email
+            
+            # Search for keywords in message content
+            if keywords:
+                messages = ChatMessage.objects(**query, content__icontains=keywords[0]).limit(limit).order_by('-timestamp')
+            else:
+                messages = ChatMessage.objects(**query).limit(limit).order_by('-timestamp')
+            
+            return [
+                {
+                    "id": str(msg.id),
+                    "role": msg.role,
+                    "content": msg.content,
+                    "timestamp": msg.timestamp.isoformat(),
+                    "session_id": str(msg.session_id)
+                }
+                for msg in messages
+            ]
+        except Exception as e:
+            print(f"Error searching messages: {e}")
+            return []
+    
+    def get_relevant_context(self, session_id: str, message: str, limit: int = 3) -> str:
+        """Retrieve relevant conversation context from MongoDB based on recent messages"""
+        try:
+            # Get recent messages from this session for context
+            messages = ChatMessage.objects(session_id=session_id).order_by('-timestamp').limit(limit * 2)
+            
+            context_lines = []
+            for msg in reversed(messages):
+                role_label = "User" if msg.role == 'user' else "Assistant"
+                context_lines.append(f"{role_label}: {msg.content}")
+            
+            return "\n".join(context_lines) if context_lines else ""
+        except Exception as e:
+            print(f"Error retrieving context: {e}")
+            return ""
+    
+    def get_session_stats(self, session_id: str) -> Dict:
+        """Get conversation statistics for a session"""
+        try:
+            messages = ChatMessage.objects(session_id=session_id)
+            user_messages = [m for m in messages if m.role == 'user']
+            ai_messages = [m for m in messages if m.role == 'assistant']
+            
+            session = ChatSession.objects(id=session_id).first()
+            
+            return {
+                "total_messages": len(messages),
+                "user_messages": len(user_messages),
+                "ai_messages": len(ai_messages),
+                "created_at": session.created_at.isoformat() if session else None,
+                "updated_at": session.updated_at.isoformat() if session else None,
+                "session_duration": self._calculate_duration(session) if session else None
+            }
+        except Exception as e:
+            print(f"Error getting session stats: {e}")
+            return {}
+    
+    def _calculate_duration(self, session) -> str:
+        """Calculate session duration"""
+        duration = session.updated_at - session.created_at
+        hours = duration.total_seconds() / 3600
+        minutes = (duration.total_seconds() % 3600) / 60
+        return f"{int(hours)}h {int(minutes)}m"
+    
     def create_session(self, title: str = "New Chat"):
-        new_session = ChatSession(   
-            user_id=self.user_email,
-            email=self.user_email,
-            title=title
-        )
-        new_session.save()
-        return str(new_session.id)
+        """Create a new chat session"""
+        try:
+            new_session = ChatSession(   
+                user_id=self.user_email,
+                email=self.user_email,
+                title=title
+            )
+            new_session.save()
+            print(f"[ChatBot] New session created: {new_session.id}")
+            return str(new_session.id)
+        except Exception as e:
+            print(f"Error creating session: {e}")
+            raise APIError(status_code=500, message="Failed to create session", error_code="SESSION_CREATE_ERROR")
    
     def get_session_history(self, session: str) -> BaseChatMessageHistory:
         """Get or create session history, loading from MongoDB if exists"""
@@ -86,6 +166,10 @@ class ChatBotService:
         return self.store[session]
     
     def send_message(self, session_id: str, message: str):
+        # Validate session ownership
+        if not self.validate_session_ownership(session_id):
+            raise APIError(status_code=403, message="Unauthorized access to session", error_code="UNAUTHORIZED")
+        
         # Save user message to MongoDB
         msg = ChatMessage(
             session_id=session_id,
@@ -93,6 +177,7 @@ class ChatBotService:
             content=message
         )
         msg.save()
+        print(f"[ChatBot] User message saved to MongoDB for session {session_id}")
         
         # Clear cache to force reload from MongoDB
         if session_id in self.store:
@@ -107,13 +192,18 @@ class ChatBotService:
         # Format resume data for context
         resume_context = self._format_resume_context(resume)
         
-        # Build prompt with resume context
+        # Get relevant conversation context from MongoDB
+        conversation_context = self.get_relevant_context(session_id, message, limit=3)
+        context_prompt = f"\n\nRecent Conversation Context:\n{conversation_context}" if conversation_context else ""
+        
+        # Build prompt with resume context and conversation history
         system_prompt = f"""You are Interview Coach AI. Help with resumes, interviews, and career advice.
 
 User's Profile Information:
-{resume_context}
+{resume_context}{context_prompt}
 
-Use this information to provide personalized advice tailored to the user's background, skills, and experience."""
+Use this information to provide personalized advice tailored to the user's background, skills, and experience.
+Ensure responses are consistent with previous conversation context."""
         
         qa_prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
@@ -148,6 +238,17 @@ Use this information to provide personalized advice tailored to the user's backg
             content=response
         )
         ai_msg.save()
+        print(f"[ChatBot] AI response saved to MongoDB for session {session_id}")
+        
+        # Update session's updated_at timestamp
+        try:
+            session = ChatSession.objects(id=session_id).first()
+            if session:
+                session.updated_at = datetime.now()
+                session.save()
+                print(f"[ChatBot] Session {session_id} timestamp updated")
+        except Exception as e:
+            print(f"Error updating session timestamp: {e}")
         
         return response
     
@@ -183,17 +284,65 @@ Use this information to provide personalized advice tailored to the user's backg
         return "\n".join(lines) if lines else "No resume details available."
     
     def get_all_sessions(self) -> list:
-        """Get all chat sessions for user"""
-        sessions = ChatSession.objects(email=self.user_email).order_by('-updated_at')
-        return [
-            {
-                "id": str(s.id),
-                "title": s.title,
-                "created_at": s.created_at.isoformat(),
-                "updated_at": s.updated_at.isoformat()
-            }
-            for s in sessions
-        ]
+        """Get all chat sessions for user with message count"""
+        try:
+            sessions = ChatSession.objects(email=self.user_email).order_by('-updated_at')
+            return [
+                {
+                    "_id": str(s.id),
+                    "title": s.title,
+                    "email": s.email,
+                    "created_at": s.created_at.isoformat(),
+                    "updated_at": s.updated_at.isoformat(),
+                    "message_count": len(ChatMessage.objects(session_id=str(s.id)))
+                }
+                for s in sessions
+            ]
+        except Exception as e:
+            print(f"Error getting sessions: {e}")
+            return []
+    
+    def get_session_messages(self, session_id: str, limit: int = 50, skip: int = 0) -> List[Dict]:
+        """Retrieve paginated messages from a session"""
+        if not self.validate_session_ownership(session_id):
+            raise APIError(status_code=403, message="Unauthorized access to session", error_code="UNAUTHORIZED")
+        
+        try:
+            messages = ChatMessage.objects(session_id=session_id).order_by('timestamp').skip(skip).limit(limit)
+            return [
+                {
+                    "id": str(msg.id),
+                    "role": msg.role,
+                    "content": msg.content,
+                    "timestamp": msg.timestamp.isoformat()
+                }
+                for msg in messages
+            ]
+        except Exception as e:
+            print(f"Error retrieving messages: {e}")
+            return []
+    
+    def delete_session(self, session_id: str) -> bool:
+        """Delete a session and all its messages"""
+        if not self.validate_session_ownership(session_id):
+            raise APIError(status_code=403, message="Unauthorized access to session", error_code="UNAUTHORIZED")
+        
+        try:
+            # Delete all messages in session
+            ChatMessage.objects(session_id=session_id).delete()
+            
+            # Delete session
+            ChatSession.objects(id=session_id).delete()
+            
+            # Clear from cache
+            if session_id in self.store:
+                del self.store[session_id]
+            
+            print(f"[ChatBot] Session {session_id} and all messages deleted")
+            return True
+        except Exception as e:
+            print(f"Error deleting session: {e}")
+            return False
 
 
 
