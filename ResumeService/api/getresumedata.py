@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Request
 from utils.apiresponse import success_response,error_response
 from Models.resumeservice.resume_models import Resume_data
 from Models.userReg.user import User
-from middlewares.auth_middleware import verify_jwt
 
 router=APIRouter(
     prefix="/api",
@@ -11,10 +10,11 @@ router=APIRouter(
 
 
 @router.get("/user-resumes")
-async def get_user_resumes(user=Depends(verify_jwt)):
+async def get_user_resumes(request: Request):
     """Get all resumes for the authenticated user"""
     try:
         # Use authenticated user's email
+        user = request.state.user
         actual_user_email = user.email
         
         # Find user by email
@@ -62,7 +62,8 @@ async def get_user_resumes(user=Depends(verify_jwt)):
         )
 
 @router.get("/resume/{resume_id}")
-async def get_resume(resume_id:str, user=Depends(verify_jwt)):
+async def get_resume(resume_id:str, request: Request):
+    user = request.state.user
     try:
         resume=Resume_data.objects(id=resume_id).first()
         if not resume:

@@ -3,7 +3,7 @@ from passlib.context import CryptContext
 import logging
 
 from AuthService.controllers.emailservice.sendotp import send_otp_email
-from utils.token import create_access_token, verify_access_token
+from utils.token import create_access_token, create_refresh_token, verify_access_token
 from AuthService.utils.helper.generate_username import generate_unique_username
 from utils.apierror import APIError
 from utils.apiresponse import success_response, error_response
@@ -154,15 +154,20 @@ async def complete_registration(email: str, password: str, fullname: str, regist
         username=username,
         is_email_verified=True
     )
-    new_user.save()
+   
   
     # Generate access token for the newly registered user
-    access_token = create_access_token(user_id=str(new_user.email))
+    access_token = create_access_token(user_id=str(new_user.id))
+    refresh_token = create_refresh_token(user_id=str(new_user.id))
+    new_user.RefreshToken = refresh_token
+    new_user.save()
+    
  
     return success_response(
         message="Registration completed successfully",
         data={
             "access_token": access_token,
+            "refresh_token": refresh_token,
             "user_id": str(new_user.id),
             "user": {
                 "id": str(new_user.id),

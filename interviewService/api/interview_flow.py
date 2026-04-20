@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Request
 from interviewService.loader.get_data import InterviewDataLoader
 from interviewService.QuestionGenService.Questiongen import QuestionGen
 from interviewService.anwerService.AnwerListen import AnwerListen
@@ -6,7 +6,6 @@ from interviewService.Analyser.analysisanwer import AnalysisAnswer
 from Models.resumeservice.resume_models import Resume_data
 from Models.interviewservice.interview_models import InterviewSession
 from Models.userReg.user import User
-from middlewares.auth_middleware import verify_jwt
 from utils.apierror import APIError
 from utils.apiresponse import success_response, error_response
 from interviewService.schema.interviewservice import StartInterviewRequest, SubmitAnswerRequest, SubmitInterviewRequest
@@ -22,7 +21,8 @@ router = APIRouter(
 # ============= INTERVIEW ENDPOINTS =============
 
 @router.post("/start")
-async def start_interview(request: StartInterviewRequest, user=Depends(verify_jwt)):
+async def start_interview(req: StartInterviewRequest, request: Request):
+    user = request.state.user
     """Start a new interview session and generate 2 questions"""
     try:
         api_key = os.getenv("GROQ_API_KEY")
@@ -30,13 +30,13 @@ async def start_interview(request: StartInterviewRequest, user=Depends(verify_jw
             raise APIError(status_code=400, message="API key is required", error_code="MISSING_API_KEY")
         
         # Validate resume exists
-        resume = Resume_data.objects(id=request.resume_id).first()
+        resume = Resume_data.objects(id=req.resume_id).first()
         if not resume:
-            raise APIError(status_code=404, message=f"Resume with ID {request.resume_id} not found", error_code="RESUME_NOT_FOUND")
+            raise APIError(status_code=404, message=f"Resume with ID {req.resume_id} not found", error_code="RESUME_NOT_FOUND")
         
         # Generate questions from job description
         data_loader = InterviewDataLoader()
-        context = data_loader.extract_job_info(request.job_description, api_key=api_key, resume_id=request.resume_id)
+        context = data_loader.extract_job_info(req.job_description, api_key=api_key, resume_id=req.resume_id)
         
         question_gen = QuestionGen(api_key=api_key)
         questions = question_gen.generate_questions(context)
@@ -45,9 +45,9 @@ async def start_interview(request: StartInterviewRequest, user=Depends(verify_jw
         user_obj = User.objects(email=user.email).first()
         interview = InterviewSession(
             user=user_obj,
-            job_title=request.job_title,
-            job_description=request.job_description,
-            resume_id=request.resume_id,
+            job_title=req.job_title,
+            job_description=req.job_description,
+            resume_id=req.resume_id,
             questions=questions
         )
         interview.save()
@@ -73,11 +73,12 @@ async def start_interview(request: StartInterviewRequest, user=Depends(verify_jw
 
 
 @router.post("/submit-answer")
-async def submit_answer(request: SubmitAnswerRequest, user=Depends(verify_jwt)):
+async def submit_answer(req: SubmitAnswerRequest, request: Request):
     """Submit an answer (audio or text) for current question"""
+    user = request.state.user
     try:
         # Validate session exists and belongs to user
-        interview = InterviewSession.objects(id=request.session_id).first()
+        interview = InterviewSession.objects(id=req.session_id).first()
         if not interview:
             raise APIError(status_code=404, message="Interview session not found", error_code="SESSION_NOT_FOUND")
         
@@ -87,7 +88,7 @@ async def submit_answer(request: SubmitAnswerRequest, user=Depends(verify_jwt)):
         
         # Handle audio input
         answer_text = request.answer
-        if request.use_audio:
+        if req.use_audio:
             try:
                 audio_listener = AnwerListen()
                 answer_text = audio_listener.listen()
@@ -130,11 +131,12 @@ async def submit_answer(request: SubmitAnswerRequest, user=Depends(verify_jwt)):
 
 
 @router.post("/submit")
-async def submit_interview(request: SubmitInterviewRequest, user=Depends(verify_jwt)):
+async def submit_interview(req: SubmitInterviewRequest, request: Request):
     """Submit interview and analyze all answers, return score out of 10"""
+    user = request.state.user
     try:
         # Validate session
-        interview = InterviewSession.objects(id=request.session_id).first()
+        interview = InterviewSession.objects(id=req.session_id).first()
         if not interview:
             raise APIError(status_code=404, message="Interview session not found", error_code="SESSION_NOT_FOUND")
         
@@ -188,8 +190,9 @@ async def submit_interview(request: SubmitInterviewRequest, user=Depends(verify_
 
 
 @router.get("/session/{session_id}")
-async def get_interview_session(session_id: str, user=Depends(verify_jwt)):
+async def get_interview_session(session_id: str, request: Request):
     """Get interview session details"""
+    user = request.state.user
     try:
         interview = InterviewSession.objects(id=session_id).first()
         if not interview:
@@ -226,8 +229,9 @@ async def get_interview_session(session_id: str, user=Depends(verify_jwt)):
 
 
 @router.get("/sessions")
-async def get_user_interviews(user=Depends(verify_jwt)):
+async def get_user_interviews(request: Request):
     """Get all interview sessions for user"""
+    user = request.state.user
     try:
         user_obj = User.objects(email=user.email).first()
         interviews = InterviewSession.objects(user=user_obj).order_by('-created_at')
@@ -254,7 +258,7 @@ async def get_user_interviews(user=Depends(verify_jwt)):
 
 
 @router.post("/transcribe-audio")
-async def transcribe_audio(request: dict, user=Depends(verify_jwt)):
+async def transcribe_audio(req: dict, request: Request):
     """Transcribe audio blob to text
     
     Expected request body:
@@ -262,8 +266,9 @@ async def transcribe_audio(request: dict, user=Depends(verify_jwt)):
         "audio_data": "base64_encoded_audio_string"
     }
     """
+    user = request.state.user
     try:
-        audio_data = request.get("audio_data")
+        audio_data = req.get("audio_data")
         if not audio_data:
             raise APIError(
                 status_code=400,

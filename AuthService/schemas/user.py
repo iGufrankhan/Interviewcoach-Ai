@@ -4,6 +4,8 @@ from pydantic import BaseModel, EmailStr, Field
 class UserLoginRequest(BaseModel):
     email: EmailStr = Field(..., description="The user's email address")
     password: str = Field(..., description="The user's password")
+    access_token: str | None = Field(default=None, description="Access token for authenticated requests (optional)")
+    refresh_token: str | None = Field(default=None, description="Refresh token for obtaining new access tokens (optional)")
 
 
 class UserResponse(BaseModel):

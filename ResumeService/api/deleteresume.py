@@ -1,7 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Request
 from utils.apiresponse import success_response,error_response
 from Models.resumeservice.resume_models import Resume_data
-from middlewares.auth_middleware import verify_jwt
 
 
 
@@ -12,7 +11,8 @@ router=APIRouter(
 
 
 @router.delete("/delete-resume/{resume_id}")
-async def delete_resume(resume_id:str, user=Depends(verify_jwt)):
+async def delete_resume(resume_id:str, request: Request):
+    user = request.state.user
     try:
         resume=Resume_data.objects(id=resume_id).first()
         if not resume:

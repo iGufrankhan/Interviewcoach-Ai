@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 from JobMaching.analyser.resumeanalise import JobMatchingService
 from utils.apierror import APIError
-from middlewares.auth_middleware import verify_jwt
 import os
 
 router = APIRouter(
@@ -20,9 +19,11 @@ class AnalyseResumeRequest(BaseModel):
     )
 
 @router.post("/analyseresume")
-async def analyse_resume(request: AnalyseResumeRequest, user=Depends(verify_jwt)):
+async def analyse_resume(request: Request, req_body: AnalyseResumeRequest):
     """
     Analyze resume against job description
+    
+    Protected route - requires JWT authentication (handled by middleware)
     
     Supports two modes:
     - Hybrid RAG (use_rag=True): Combines FAISS semantic search + LLM analysis for better accuracy
@@ -33,14 +34,17 @@ async def analyse_resume(request: AnalyseResumeRequest, user=Depends(verify_jwt)
     - eligible: YES/PARTIAL/NO
     - For hybrid mode: combines retrieverScore and llmScore
     """
+    # User already authenticated by middleware
+    user = request.state.user
+    
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         raise APIError(status_code=500, message="GROQ_API_KEY environment variable is not set", error_code="MISSING_API_KEY")
     
-    if not request.resume_id:
+    if not req_body.resume_id:
         raise APIError(status_code=400, message="resume_id is required", error_code="MISSING_RESUME_ID")
     
-    if not request.description:
+    if not req_body.description:
         raise APIError(
             status_code=400, 
             message="description is required. Provide the job description text.",
@@ -50,9 +54,9 @@ async def analyse_resume(request: AnalyseResumeRequest, user=Depends(verify_jwt)
     try:
         resume_service = JobMatchingService(
             api_key=api_key, 
-            resume_id=request.resume_id, 
-            description=request.description,
-            use_rag=request.use_rag
+            resume_id=req_body.resume_id, 
+            description=req_body.description,
+            use_rag=req_body.use_rag
         )
         analysis_result = resume_service.analyze()
         

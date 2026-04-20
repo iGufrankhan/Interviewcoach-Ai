@@ -1,11 +1,10 @@
 import os
-from fastapi import APIRouter, UploadFile, File, Depends
+from fastapi import APIRouter, UploadFile, File, Request
 from utils.apierror import APIError
 from utils.apiresponse import success_response, error_response
 from ResumeService.services.resumeservice import ResumeService
 from ResumeService.utils.file_validators import validate_file_extension
 from ResumeService.repository.resume_datasave import get_user_resumes
-from middlewares.auth_middleware import verify_jwt
 
 router = APIRouter(
     prefix="/api",
@@ -23,10 +22,11 @@ groq_api_key = os.getenv("GROQ_API_KEY")
 
 
 @router.post("/upload-resume")
-async def upload_resume(file: UploadFile = File(...), user=Depends(verify_jwt)):
+async def upload_resume(request: Request, file: UploadFile = File(...)):
     """Upload and process resume for authenticated user - Requires authentication"""
     
     # Use authenticated user's email
+    user = request.state.user
     actual_user_email = user.email
     
     # Validate file extension
