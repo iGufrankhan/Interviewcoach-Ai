@@ -18,7 +18,10 @@ class ChatBotService:
     def __init__(self, api_key: str, user_email: str):
         self.api_key = api_key
         self.user_email = user_email
-        self.store = {}
+        self.store = {}  # In-memory session cache
+        self.resume_cache = None  # Resume data cache
+        self.resume_cache_time = None  # Cache timestamp
+        self.cache_ttl = 300  # Cache for 5 minutes
         
         self.llm = ChatGroq(
             groq_api_key=api_key,
@@ -26,23 +29,39 @@ class ChatBotService:
         )
     
     def get_user_resume(self) -> dict:
-        """Fetch user's resume data from MongoDB"""
+        """Fetch user's resume data from MongoDB with caching (5 min TTL)"""
+        # Check cache
+        if self.resume_cache is not None and self.resume_cache_time is not None:
+            time_elapsed = (datetime.now() - self.resume_cache_time).total_seconds()
+            if time_elapsed < self.cache_ttl:
+                return self.resume_cache
+        
         try:
             user = User.objects(email=self.user_email).first()
             if not user:
+                self.resume_cache = {}
+                self.resume_cache_time = datetime.now()
                 return {}
             
             resume = Resume_data.objects(user=user).first()
             if not resume:
+                self.resume_cache = {}
+                self.resume_cache_time = datetime.now()
                 return {}
             
-            return {
+            resume_data = {
                 "name": resume.name or "Not provided",
                 "skills": resume.skills or [],
                 "experience": resume.experience or [],
                 "education": resume.education or [],
                 "projects": resume.projects or []
             }
+            
+            # Cache the result
+            self.resume_cache = resume_data
+            self.resume_cache_time = datetime.now()
+            
+            return resume_data
         except Exception as e:
             print(f"Error fetching resume: {e}")
             return {}
@@ -179,14 +198,11 @@ class ChatBotService:
         msg.save()
         print(f"[ChatBot] User message saved to MongoDB for session {session_id}")
         
-        # Clear cache to force reload from MongoDB
-        if session_id in self.store:
-            del self.store[session_id]
-        
-        # Get fresh session history from MongoDB
+        # Get session history (append new message instead of clearing cache)
         session_history = self.get_session_history(session_id)
+        session_history.add_user_message(message)
         
-        # Fetch user's resume data
+        # Fetch user's resume data (uses cache with TTL)
         resume = self.get_user_resume()
         
         # Format resume data for context
@@ -239,6 +255,9 @@ Ensure responses are consistent with previous conversation context."""
         )
         ai_msg.save()
         print(f"[ChatBot] AI response saved to MongoDB for session {session_id}")
+        
+        # Append AI message to cache
+        session_history.add_ai_message(response)
         
         # Update session's updated_at timestamp
         try:
@@ -343,23 +362,3 @@ Ensure responses are consistent with previous conversation context."""
         except Exception as e:
             print(f"Error deleting session: {e}")
             return False
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

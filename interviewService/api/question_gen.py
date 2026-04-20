@@ -7,13 +7,12 @@ import os
 from interviewService.QuestionGenService.Questiongen import QuestionGen
 
 router = APIRouter(
-    prefix="/question_gen",
     tags=["question_gen"],
     responses={404: {"description": "Not found"}},
 )
 
 
-@router.post("/generate")
+@router.post("/generate-questions")
 async def generate_questions(description: str, resume_id: str, request: Request):
     user = request.state.user
     api_key = os.getenv("GROQ_API_KEY")

@@ -4,7 +4,6 @@ from Models.resumeservice.resume_models import Resume_data
 from Models.userReg.user import User
 
 router=APIRouter(
-    prefix="/api",
     tags=["Get Resume Data"]
 )
 

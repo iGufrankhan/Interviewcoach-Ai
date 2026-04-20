@@ -5,7 +5,6 @@ from utils.apierror import APIError
 import os
 
 router = APIRouter(
-    prefix="/api",
     tags=["Resume Analysis"]
 )
 

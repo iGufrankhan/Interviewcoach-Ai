@@ -1,8 +1,13 @@
 from fastapi import APIRouter, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from chat_agent.chatBotService.chatBotservice import ChatBotService
 from utils.apiresponse import success_response, error_response
+from utils.apierror import APIError
 import os
-from chat_agent.schema.chatBot import CreateSessionRequest, SendMessageRequest
+from chat_agent.schema.chatBot import CreateSessionRequest, SendMessageRequest, GetMessagesRequest
+
+limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter(
     prefix="/api/chat",
@@ -14,12 +19,18 @@ router = APIRouter(
 
 @router.post("/create-session")
 async def create_session(req: CreateSessionRequest, request: Request):
-    user = request.state.user
     """Create a new chat session"""
+    user = request.state.user
     try:
         api_key = os.getenv("GROQ_API_KEY")
-        service = ChatBotService(api_key, user.email)
+        if not api_key:
+            return error_response(
+                message="GROQ_API_KEY is not configured",
+                error_code="MISSING_API_KEY",
+                status_code=500
+            )
         
+        service = ChatBotService(api_key, user.email)
         session_id = service.create_session(req.title)
         
         return success_response(
@@ -27,20 +38,34 @@ async def create_session(req: CreateSessionRequest, request: Request):
             data={"session_id": session_id},
             status_code=201
         )
+    except APIError as e:
+        return error_response(
+            message=e.detail.get("error", "Failed to create session"),
+            error_code=e.detail.get("error_code", "SESSION_CREATE_ERROR"),
+            status_code=e.status_code
+        )
     except Exception as e:
         return error_response(
-            message=str(e),
+            message="Failed to create session",
             error_code="SESSION_CREATE_ERROR",
             status_code=500
         )
 
 
+@limiter.limit("10/minute")
 @router.post("/send-message")
 async def send_message(req: SendMessageRequest, request: Request):
+    """Send message and get AI response - Rate limited to 10/minute"""
     user = request.state.user
-    """Send message and get AI response"""
     try:
         api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            return error_response(
+                message="GROQ_API_KEY is not configured",
+                error_code="MISSING_API_KEY",
+                status_code=500
+            )
+        
         service = ChatBotService(api_key, user.email)
         
         # Validate user owns this session
@@ -58,9 +83,15 @@ async def send_message(req: SendMessageRequest, request: Request):
             data={"response": response},
             status_code=200
         )
+    except APIError as e:
+        return error_response(
+            message=e.detail.get("error", "Failed to send message"),
+            error_code=e.detail.get("error_code", "MESSAGE_SEND_ERROR"),
+            status_code=e.status_code
+        )
     except Exception as e:
         return error_response(
-            message=str(e),
+            message="Failed to send message",
             error_code="MESSAGE_SEND_ERROR",
             status_code=500
         )
@@ -72,8 +103,14 @@ async def get_sessions(request: Request):
     user = request.state.user
     try:
         api_key = os.getenv("GROQ_API_KEY")
-        service = ChatBotService(api_key, user.email)
+        if not api_key:
+            return error_response(
+                message="GROQ_API_KEY is not configured",
+                error_code="MISSING_API_KEY",
+                status_code=500
+            )
         
+        service = ChatBotService(api_key, user.email)
         sessions = service.get_all_sessions()
         
         return success_response(
@@ -83,18 +120,30 @@ async def get_sessions(request: Request):
         )
     except Exception as e:
         return error_response(
-            message=str(e),
+            message="Failed to retrieve sessions",
             error_code="SESSIONS_GET_ERROR",
             status_code=500
         )
 
 
 @router.get("/session/{session_id}")
-async def get_session_history(session_id: str, request: Request):
-    """Get chat history for a session"""
+async def get_session_history(session_id: str, limit: int = 100, skip: int = 0, request: Request = None):
+    """Get chat history for a session with pagination"""
     user = request.state.user
     try:
+        if limit > 500:
+            limit = 500
+        if skip < 0:
+            skip = 0
+        
         api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            return error_response(
+                message="GROQ_API_KEY is not configured",
+                error_code="MISSING_API_KEY",
+                status_code=500
+            )
+        
         service = ChatBotService(api_key, user.email)
         
         # Validate user owns this session
@@ -105,17 +154,97 @@ async def get_session_history(session_id: str, request: Request):
                 status_code=403
             )
         
-        # Get messages directly from MongoDB
-        messages = service.get_session_messages(session_id, limit=100)
+        # Get messages with pagination
+        messages = service.get_session_messages(session_id, limit=limit, skip=skip)
         
         return success_response(
             message="Chat history retrieved",
-            data=messages,
+            data={
+                "messages": messages,
+                "limit": limit,
+                "skip": skip
+            },
             status_code=200
         )
     except Exception as e:
         return error_response(
-            message=str(e),
+            message="Failed to retrieve chat history",
             error_code="HISTORY_GET_ERROR",
             status_code=500
         )
+
+
+@router.get("/session/{session_id}/stats")
+async def get_session_stats(session_id: str, request: Request):
+    """Get statistics for a chat session"""
+    user = request.state.user
+    try:
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            return error_response(
+                message="GROQ_API_KEY is not configured",
+                error_code="MISSING_API_KEY",
+                status_code=500
+            )
+        
+        service = ChatBotService(api_key, user.email)
+        
+        # Validate user owns this session
+        if not service.validate_session_ownership(session_id):
+            return error_response(
+                message="Unauthorized: Session not found or does not belong to user",
+                error_code="UNAUTHORIZED_SESSION",
+                status_code=403
+            )
+        
+        stats = service.get_session_stats(session_id)
+        
+        return success_response(
+            message="Session statistics retrieved",
+            data=stats,
+            status_code=200
+        )
+    except Exception as e:
+        return error_response(
+            message="Failed to retrieve session statistics",
+            error_code="STATS_GET_ERROR",
+            status_code=500
+        )
+
+
+@router.delete("/session/{session_id}")
+async def delete_session(session_id: str, request: Request):
+    """Delete a chat session and all its messages"""
+    user = request.state.user
+    try:
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            return error_response(
+                message="GROQ_API_KEY is not configured",
+                error_code="MISSING_API_KEY",
+                status_code=500
+            )
+        
+        service = ChatBotService(api_key, user.email)
+        
+        # Validate user owns this session
+        if not service.validate_session_ownership(session_id):
+            return error_response(
+                message="Unauthorized: Session not found or does not belong to user",
+                error_code="UNAUTHORIZED_SESSION",
+                status_code=403
+            )
+        
+        service.delete_session(session_id)
+        
+        return success_response(
+            message="Session deleted successfully",
+            status_code=200
+        )
+    except Exception as e:
+        return error_response(
+            message="Failed to delete session",
+            error_code="SESSION_DELETE_ERROR",
+            status_code=500
+        )
+        

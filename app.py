@@ -18,6 +18,7 @@ from JobMaching.api.analyse import router as analyse_router
 from interviewService.api.question_gen import router as question_gen_router
 from chat_agent.api.chatBot import router as chat_router  
 from interviewService.api.interview_flow import router as interview_flow_router
+from routes.utility import router as utility_router
 
 app = FastAPI()
 
@@ -40,67 +41,17 @@ app.add_middleware(
 app.add_middleware(AuthMiddleware)
 
 # Register routers
+app.include_router(utility_router)
 app.include_router(register_router)
 app.include_router(login_router)
 app.include_router(refresh_token_router)
 app.include_router(resetpassword_router)
 app.include_router(logout_router)
-app.include_router(resume_router, prefix="/resume")
-app.include_router(update_router, prefix="/resume")
-app.include_router(delete_router, prefix="/resume")
-app.include_router(analyse_router, prefix="/jobmatching")
-app.include_router(question_gen_router, prefix="/interviewservice")
+app.include_router(resume_router, prefix="/api/resume")
+app.include_router(update_router, prefix="/api/resume")
+app.include_router(delete_router, prefix="/api/resume")
+app.include_router(analyse_router, prefix="/api/jobmatching")
+app.include_router(question_gen_router, prefix="/api/interviewservice")
 app.include_router(chat_router)
 app.include_router(interview_flow_router)
-
-
-# ============ Health Check & Utility Routes ============
-
-@app.get("/")
-async def root():
-    """Root endpoint - API is running"""
-    return {
-        "status": "success",
-        "message": "Interview Coach AI API is running",
-        "version": "1.0.0"
-    }
-
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "service": "Interview Coach AI Backend"
-    }
-
-
-@app.get("/api/status")
-async def api_status():
-    """API status and available services"""
-    return {
-        "status": "operational",
-        "services": {
-            "authentication": {
-                "register": "/api/auth/send-otp",
-                "login": "/api/login/",
-                "password_reset": "/api/auth/request-password-reset"
-            },
-            "resume": {
-                "upload": "/resume/upload",
-                "get": "/resume/get",
-                "delete": "/resume/delete"
-            },
-            "job_matching": {
-                "analyze": "/jobmatching/analyse"
-            },
-            "interview": {
-                "question_gen": "/interviewservice/generate-questions",
-                "start": "/interviewflow/start",
-                "submit-answer": "/interviewflow/submit-answer",
-                "submit": "/interviewflow/submit"
-            }
-        }
-    }
-
 

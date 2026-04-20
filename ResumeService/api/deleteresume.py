@@ -5,7 +5,6 @@ from Models.resumeservice.resume_models import Resume_data
 
 
 router=APIRouter(
-    prefix="/api",
     tags=["Resume Delete"]
 )
 

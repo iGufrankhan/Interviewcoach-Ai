@@ -7,7 +7,6 @@ from ResumeService.utils.file_validators import validate_file_extension
 from ResumeService.repository.resume_datasave import get_user_resumes
 
 router = APIRouter(
-    prefix="/api",
     tags=["Resume Upload"]
 )
 
