@@ -1,53 +1,52 @@
 from fastapi import APIRouter, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from JobMaching.analyser.resumeanalise import JobMatchingService
 from utils.apierror import APIError
+from utils.error_codes import ErrorCode
+from utils.apiresponse import success_response
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     tags=["Resume Analysis"]
 )
 
+
 class AnalyseResumeRequest(BaseModel):
     """Resume analysis request model"""
-    resume_id: str = Field(..., description="Resume ID to analyze")
-    description: str = Field(..., description="Job description text")
+    resume_id: str = Field(..., min_length=1, description="Resume ID to analyze")
+    description: str = Field(..., min_length=50, description="Job description text (min 50 characters)")
     use_rag: bool = Field(
         default=True, 
         description="Use Hybrid RAG system (True) or LLM-only (False)"
     )
+    
+    @validator("resume_id")
+    def validate_resume_id(cls, v):
+        if not v or not v.strip():
+            raise ValueError("Resume ID cannot be empty")
+        return v.strip()
+    
+    @validator("description")
+    def validate_description(cls, v):
+        if len(v.strip()) < 50:
+            raise ValueError("Job description must be at least 50 characters")
+        return v
+
 
 @router.post("/analyseresume")
 async def analyse_resume(request: Request, req_body: AnalyseResumeRequest):
-    """
-    Analyze resume against job description
-    
-    Protected route - requires JWT authentication (handled by middleware)
-    
-    Supports two modes:
-    - Hybrid RAG (use_rag=True): Combines FAISS semantic search + LLM analysis for better accuracy
-    - LLM-only (use_rag=False): Traditional LLM-based comparison
-    
-    Returns:
-    - overallScore: 0-100 match score
-    - eligible: YES/PARTIAL/NO
-    - For hybrid mode: combines retrieverScore and llmScore
-    """
-    # User already authenticated by middleware
+
     user = request.state.user
     
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
-        raise APIError(status_code=500, message="GROQ_API_KEY environment variable is not set", error_code="MISSING_API_KEY")
-    
-    if not req_body.resume_id:
-        raise APIError(status_code=400, message="resume_id is required", error_code="MISSING_RESUME_ID")
-    
-    if not req_body.description:
+        logger.error("GROQ_API_KEY not configured")
         raise APIError(
-            status_code=400, 
-            message="description is required. Provide the job description text.",
-            error_code="MISSING_DESCRIPTION"
+            error_code=ErrorCode.MISSING_API_KEY,
+            internal_message="GROQ_API_KEY environment variable is not set"
         )
     
     try:
@@ -59,15 +58,24 @@ async def analyse_resume(request: Request, req_body: AnalyseResumeRequest):
         )
         analysis_result = resume_service.analyze()
         
-        return {"status": "success", "data": analysis_result}
-        
-    except APIError as e:
-        raise e
-    except Exception as e:
-        raise APIError(
-            status_code=400, 
-            message=str(e) + " (Use 'description' parameter to paste job description directly for better results)",
-            error_code="ANALYSIS_FAILED"
+        return success_response(
+            message="Resume analysis completed successfully",
+            data=analysis_result,
+            status_code=200
         )
-
-    
+        
+    except APIError:
+        
+        raise
+    except ValueError as e:
+        logger.warning(f"Validation error during analysis: {str(e)}")
+        raise APIError(
+            error_code=ErrorCode.INVALID_JOB_DESCRIPTION,
+            internal_message=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Analysis failed for resume {req_body.resume_id}", exc_info=True)
+        raise APIError(
+            error_code=ErrorCode.ANALYSIS_FAILED,
+            internal_message=str(e)
+        )

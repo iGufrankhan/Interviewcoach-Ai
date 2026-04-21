@@ -1,10 +1,10 @@
 import os
 from fastapi import APIRouter, UploadFile, File, Request
 from utils.apierror import APIError
-from utils.apiresponse import success_response, error_response
+from utils.apiresponse import success_response
+from utils.error_codes import ErrorCode
 from ResumeService.services.resumeservice import ResumeService
 from ResumeService.utils.file_validators import validate_file_extension
-from ResumeService.repository.resume_datasave import get_user_resumes
 
 router = APIRouter(
     tags=["Resume Upload"]
@@ -12,9 +12,8 @@ router = APIRouter(
 
 if not os.getenv("GROQ_API_KEY"):
     raise APIError(
-        status_code=500, 
-        message="GROQ_API_KEY environment variable not set", 
-        error_code="MISSING_API_KEY"
+        error_code=ErrorCode.MISSING_API_KEY,
+        internal_message="GROQ_API_KEY environment variable not set"
     )
 
 groq_api_key = os.getenv("GROQ_API_KEY")
@@ -30,12 +29,11 @@ async def upload_resume(request: Request, file: UploadFile = File(...)):
     
     # Validate file extension
     if not validate_file_extension(file.filename):
-        return error_response(
-            message="Invalid file type. Allowed types are: pdf, docx, txt",
-            error_code="INVALID_FILE_TYPE",
-            status_code=400
+        raise APIError(
+            error_code=ErrorCode.INVALID_FILE_TYPE,
+            message="Invalid file type. Allowed types are: PDF, DOCX, or TXT"
         )
-     
+    
     try:
         # Initialize ResumeService with authenticated user's email
         resume_service = ResumeService(
@@ -53,17 +51,11 @@ async def upload_resume(request: Request, file: UploadFile = File(...)):
             status_code=201
         )
     
-    except APIError as e:
-        error_code = e.detail.get("error_code", "API_ERROR") if isinstance(e.detail, dict) else "API_ERROR"
-        error_msg = e.detail.get("error", str(e.detail)) if isinstance(e.detail, dict) else str(e.detail)
-        return error_response(
-            message=error_msg,
-            error_code=error_code,
-            status_code=e.status_code
-        )
+    except APIError:
+        raise
     except Exception as e:
-        return error_response(
-            message=str(e),
-            error_code="PROCESSING_ERROR",
-            status_code=500
+        raise APIError(
+            error_code=ErrorCode.RESUME_PROCESSING_FAILED,
+            internal_message=str(e)
         )
+        

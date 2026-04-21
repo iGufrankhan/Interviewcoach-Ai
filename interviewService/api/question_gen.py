@@ -1,10 +1,11 @@
+import os
 from fastapi import APIRouter, Request
 from interviewService.loader.get_data import InterviewDataLoader
-from utils.apierror import APIError
-from Models.resumeservice.resume_models import Resume_data
-
-import os
 from interviewService.QuestionGenService.Questiongen import QuestionGen
+from utils.apierror import APIError
+from utils.error_codes import ErrorCode
+from utils.apiresponse import success_response
+from Models.resumeservice.resume_models import Resume_data
 
 router = APIRouter(
     tags=["question_gen"],
@@ -14,20 +15,27 @@ router = APIRouter(
 
 @router.post("/generate-questions")
 async def generate_questions(description: str, resume_id: str, request: Request):
+    """Generate interview questions based on job description and resume."""
     user = request.state.user
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
-        raise APIError(status_code=400, message="API key is required", error_code="MISSING_API_KEY")
+        raise APIError(
+            error_code=ErrorCode.MISSING_API_KEY,
+            internal_message="GROQ_API_KEY environment variable not set"
+        )
     
     if not resume_id:
-        raise APIError(status_code=400, message="Resume ID is required", error_code="MISSING_RESUME_ID")
+        raise APIError(error_code=ErrorCode.INVALID_RESUME_ID)
     
-    if not description:
-        raise APIError(status_code=400, message="Job description is required", error_code="MISSING_DESCRIPTION")
+    if not description or len(description.strip()) < 50:
+        raise APIError(error_code=ErrorCode.INVALID_JOB_DESCRIPTION)
     
     resume = Resume_data.objects(id=resume_id).first()
     if not resume:
-        raise APIError(status_code=404, message=f"Resume with ID {resume_id} not found", error_code="RESUME_NOT_FOUND")
+        raise APIError(
+            error_code=ErrorCode.RESUME_NOT_FOUND,
+            message=f"Resume with ID {resume_id} not found"
+        )
     
     try:
         data_loader = InterviewDataLoader()
@@ -36,12 +44,19 @@ async def generate_questions(description: str, resume_id: str, request: Request)
         question_gen = QuestionGen(api_key=api_key)
         questions = question_gen.generate_questions(context)
         
-        return {"questions": questions}
+        return success_response(
+            message="Interview questions generated successfully",
+            data={"questions": questions},
+            status_code=200
+        )
     
     except APIError:
         raise
     except Exception as e:
-        raise APIError(status_code=500, message=str(e), error_code="QUESTION_GEN_ERROR")
+        raise APIError(
+            error_code=ErrorCode.QUESTION_GENERATION_FAILED,
+            internal_message=str(e)
+        )
 
 
 

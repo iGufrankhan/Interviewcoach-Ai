@@ -11,7 +11,8 @@ def success_response(
         content={
             "success": True,
             "message": message,
-            "data": data
+            "data": data,
+            "error_code": None
         }
     )
 
@@ -22,6 +23,7 @@ def error_response(
     status_code: int = 400,
     data=None
 ):
+
     return JSONResponse(
         status_code=status_code,
         content={
