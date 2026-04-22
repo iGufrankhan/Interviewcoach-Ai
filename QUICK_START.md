@@ -4,10 +4,33 @@
 
 - Node.js 18+ and npm
 - Python 3.8+
-- MongoDB running locally or cloud connection
-- Groq API key
+- MongoDB 5.0+ (running locally or cloud connection)
+- Groq API key (free tier available)
+- Git (for cloning)
 
 ## Step-by-Step Setup
+
+### 0. Database Setup (MongoDB)
+
+**Option A: Local MongoDB**
+```bash
+# Windows (if installed)
+mongod
+
+# macOS
+brew install mongodb-community
+brew services start mongodb-community
+
+# Linux
+sudo systemctl start mongod
+```
+
+**Option B: MongoDB Cloud (Atlas)**
+1. Go to https://www.mongodb.com/cloud/atlas
+2. Create free account
+3. Create a cluster (M0 free tier)
+4. Get connection string: `mongodb+srv://user:password@cluster.mongodb.net/interviewcoach`
+5. Use this in `.env` as `DATABASE_URL`
 
 ### 1. Backend Setup & Run
 
@@ -22,8 +45,17 @@ cd "c:\Users\kakab\OneDrive\Desktop\InterviewCoach AI"
 pip install -r requirements.txt
 
 # Set environment variables (create .env file in root)
-echo GROQ_API_KEY=your_api_key_here > .env
-echo MONGODB_URL=your_mongodb_url >> .env
+# Option 1: Manual creation
+echo DATABASE_URL=mongodb://localhost:27017/interviewcoach > .env
+echo DATABASE_NAME=interviewcoach >> .env
+echo GROQ_API_KEY=your_api_key_here >> .env
+echo JWT_SECRET=your_jwt_secret_key >> .env
+echo SMTP_EMAIL=your_email@gmail.com >> .env
+echo SMTP_PASSWORD=your_app_password >> .env
+
+# Option 2: Copy from template (recommended)
+cp .env.example .env
+# Then edit .env with your actual values
 
 # Start FastAPI backend
 uvicorn app:app --reload --port 8000
@@ -139,7 +171,7 @@ InterviewCoach AI/
 ├── AuthService/                     # Authentication
 ├── ResumeService/                   # Resume upload/management
 ├── interviewService/                # Interview Q&A generation
-├── JobMaching/                      # Job matching analysis
+├── JobMatching/                     # Job matching analysis
 ├── Models/                          # Database models
 ├── middlewares/                     # Auth middleware
 ├── utils/                           # Shared utilities

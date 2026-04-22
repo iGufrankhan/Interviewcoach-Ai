@@ -3,7 +3,7 @@ from AuthService.controllers.emailservice.emailTranspoter import CreateTransport
 from Models.userReg.otp import OTP
 from AuthService.utils.helper.otpgenerate import generate_otp
 from utils.apierror import APIError
-import os
+from utils.constant import GMAIL_USER, GMAIL_APP_PASSWORD
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,8 +15,8 @@ async def send_otp_email(email: str, purpose: str = "registration"):
     expires_at = otp_info["expires_at"]
 
     # Debug: Check if email config is loaded
-    gmail_user = os.getenv("GMAIL_USER")
-    gmail_password = os.getenv("GMAIL_APP_PASSWORD")
+    gmail_user = GMAIL_USER
+    gmail_password = GMAIL_APP_PASSWORD
     
     if not gmail_user or not gmail_password:
         logger.error(f"❌ Email not configured! GMAIL_USER={gmail_user}, GMAIL_PASSWORD={'***' if gmail_password else 'NOT SET'}")

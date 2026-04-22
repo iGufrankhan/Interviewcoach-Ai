@@ -592,11 +592,142 @@ Content-Type: application/json
 
 ## Authentication
 
+### Overview
 All protected endpoints require JWT token in the Authorization header:
 
 ```
 Authorization: Bearer <jwt_token>
 ```
+
+### How to Get JWT Token
+
+1. **Register Account**: `POST /api/auth/register`
+2. **Login**: `POST /api/login/` → Returns `accessToken`
+3. **Use Token**: Add to all protected endpoints in Authorization header
+
+### Protected Endpoints (Require JWT)
+```
+POST   /resume/upload
+GET    /resume/get
+DELETE /resume/delete/{id}
+POST   /api/interview/start
+POST   /api/interview/submit-answer
+POST   /api/interview/transcribe-audio
+POST   /api/interview/submit
+GET    /api/interview/sessions
+GET    /api/interview/session/{session_id}
+POST   /api/chat/chat
+GET    /api/chat/history/{session_id}
+POST   /jobmatching/analyse
+```
+
+### Unprotected Endpoints (No JWT needed)
+```
+POST   /api/auth/send-otp
+POST   /api/auth/register
+POST   /api/login/
+POST   /api/auth/request-password-reset
+POST   /api/auth/reset-password
+```
+
+### Token Expiration & Refresh
+- Access tokens expire in 24 hours
+- Use `refresh_token` to get new access token (if available)
+- After expiration: Re-login to get new token
+
+---
+
+## Validation Rules
+
+### Password Requirements
+- Minimum 8 characters
+- Must contain uppercase letter
+- Must contain at least one digit
+
+### OTP Requirements
+- 4-10 digits (registration)
+- Exactly 6 digits (password reset)
+- Only numeric characters allowed
+
+### Resume Upload
+- Supported formats: PDF, DOCX, TXT
+- Maximum file size: 10MB
+- Extracted text must be at least 100 characters
+
+### Job Description
+- Minimum 10 characters
+- Cannot be empty or whitespace-only
+- Text must be meaningful job posting content
+
+### Example Validation Error Response
+```json
+{
+  "status": "error",
+  "message": "Validation error in fields: password",
+  "error_code": "INVALID_INPUT",
+  "data": null
+}
+```
+
+---
+
+## Important Notes
+
+### Database Connection
+- Ensure MongoDB is running before starting the backend
+- Check connection string in `.env` file
+- Use `.env.example` as template
+
+### GROQ API Key
+- Get free key from: https://console.groq.com
+- Must be set in `.env` for interview generation
+- Without key: Interview generation will fail with 503 error
+
+### CORS Policy
+- Frontend must be served from allowed origins
+- Default allowed: `http://localhost:3000`, `http://127.0.0.1:3000`
+- To add more origins: Update `CORS` config in `app.py`
+
+### Rate Limiting
+- Audio transcription: Max 10 requests/minute
+- Interview generation: Max 5 requests/minute
+- Chat API: Max 20 requests/minute
+
+---
+
+## Testing Endpoints
+
+### Using cURL
+```bash
+# Register
+curl -X POST http://localhost:8000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"Password123","otp":"123456"}'
+
+# Login
+curl -X POST http://localhost:8000/api/login/ \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"Password123"}'
+
+# Get Resumes (with token)
+curl -X GET http://localhost:8000/resume/get \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+```
+
+### Using Postman
+1. Open Postman
+2. Create new request
+3. Select method (GET, POST, etc.)
+4. Enter URL: `http://localhost:8000/...`
+5. Go to "Headers" tab
+6. Add `Authorization: Bearer YOUR_TOKEN`
+7. Send request
+
+### Using Swagger UI
+1. Visit `http://localhost:8000/docs`
+2. Click "Authorize" button
+3. Enter token: `Bearer YOUR_JWT_TOKEN_HERE`
+4. Try out endpoints directly from browser
 
 The token is obtained from the login endpoint and should be stored in `localStorage` or cookies.
 

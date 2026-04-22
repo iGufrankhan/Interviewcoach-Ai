@@ -1,29 +1,77 @@
-from pydantic import BaseModel, EmailStr, Field
+"""
+User authentication and response schemas.
+
+Defines Pydantic models for user registration, login, and API responses
+with validation rules for password strength and email format.
+"""
+
+from typing import Optional
+from pydantic import BaseModel, EmailStr, Field, validator
+from lib.validators import PasswordValidator
 
 
 class UserLoginRequest(BaseModel):
+    """User login request schema."""
+    
     email: EmailStr = Field(..., description="The user's email address")
-    password: str = Field(..., description="The user's password")
-    access_token: str | None = Field(default=None, description="Access token for authenticated requests (optional)")
-    refresh_token: str | None = Field(default=None, description="Refresh token for obtaining new access tokens (optional)")
+    password: str = Field(..., min_length=8, description="The user's password")
+    access_token: Optional[str] = Field(
+        default=None, 
+        description="Access token for authenticated requests (optional)"
+    )
+    refresh_token: Optional[str] = Field(
+        default=None, 
+        description="Refresh token for obtaining new access tokens (optional)"
+    )
+
+    @validator("password")
+    def validate_password(cls, v: str) -> str:
+        """Validate password meets strength requirements."""
+        return PasswordValidator.validate_strength(v)
 
 
 class UserResponse(BaseModel):
-    id: str
-    email: EmailStr
-    fullname: str | None = None
-    created_at: str
+    """User profile response schema."""
+    
+    id: str = Field(..., description="Unique user identifier")
+    email: EmailStr = Field(..., description="User email address")
+    fullname: Optional[str] = Field(None, description="User's full name")
+    created_at: str = Field(..., description="Account creation timestamp (ISO format)")
 
 
 class userRegistrationRequest(BaseModel):
+    """User registration request schema."""
+    
     email: EmailStr = Field(..., description="The user's email address")
-    password: str = Field(..., min_length=8, max_length=72, description="The user's password (8-72 characters)")
-    fullname: str | None = Field(default=None, description="The user's full name (optional)")
+    password: str = Field(
+        ..., 
+        min_length=8, 
+        max_length=72, 
+        description="The user's password (8-72 characters)"
+    )
+    fullname: Optional[str] = Field(
+        default=None, 
+        description="The user's full name (optional)"
+    )
     registration_token: str = Field(..., description="Token received from OTP verification")
+
+    @validator("password")
+    def validate_password_strength(cls, v: str) -> str:
+        """
+        Validate password meets strength requirements.
+        
+        Requirements:
+        - Minimum 8 characters
+        - At least one uppercase letter
+        - At least one digit
+        """
+        return PasswordValidator.validate_strength(v)
 
 
 class userafterRegistrationResponse(BaseModel):
-    id: str
-    email: EmailStr
-    fullname: str | None = None
-    username: str | None = None
+    """Response after successful user registration."""
+    
+    id: str = Field(..., description="Unique user identifier")
+    email: EmailStr = Field(..., description="User email address")
+    fullname: Optional[str] = Field(None, description="User's full name")
+    username: Optional[str] = Field(None, description="User's username")

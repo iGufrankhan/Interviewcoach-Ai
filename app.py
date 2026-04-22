@@ -6,8 +6,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from middlewares.auth_middleware import AuthMiddleware
+from middlewares.rate_limit import RateLimitMiddleware
 from utils.apierror import APIError
 from utils.error_codes import ErrorCode, HttpStatusCode
+from utils.constant import CORS_ORIGINS
 import logging
 import Dbconfig.config
 
@@ -37,20 +39,26 @@ app = FastAPI(
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-    ],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Content-Type", "Authorization"],
     max_age=3600,
 )
 
+# Add rate limiting middleware
+app.add_middleware(RateLimitMiddleware)
+
 # Add JWT authentication middleware
 app.add_middleware(AuthMiddleware)
+
+
+# ========== Startup Event ==========
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database connection on application startup."""
+    await Dbconfig.config.init_db()
 
 
 # ========== Global Exception Handlers ==========
@@ -135,6 +143,27 @@ async def general_exception_handler(request: Request, exc: Exception):
             "message": "An unexpected error occurred. Please try again later.",
             "error_code": ErrorCode.INTERNAL_SERVER_ERROR,
             "data": None
+        }
+    )
+
+
+# ========== Health Check Endpoint ==========
+
+@app.get("/health", tags=["Monitoring"])
+async def health_check():
+    """Health check endpoint for monitoring."""
+    db_status = Dbconfig.config.get_db_status()
+    db_connected = Dbconfig.config.is_database_connected()
+    
+    overall_status = "healthy" if db_connected else "degraded"
+    status_code = 200 if db_connected else 503
+    
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": overall_status,
+            "database": db_status,
+            "timestamp": __import__("datetime").datetime.utcnow().isoformat()
         }
     )
 

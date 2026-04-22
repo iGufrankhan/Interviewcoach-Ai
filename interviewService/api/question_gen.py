@@ -5,6 +5,7 @@ from interviewService.QuestionGenService.Questiongen import QuestionGen
 from utils.apierror import APIError
 from utils.error_codes import ErrorCode
 from utils.apiresponse import success_response
+from utils.constant import GROQ_API_KEY
 from Models.resumeservice.resume_models import Resume_data
 
 router = APIRouter(
@@ -17,7 +18,7 @@ router = APIRouter(
 async def generate_questions(description: str, resume_id: str, request: Request):
     """Generate interview questions based on job description and resume."""
     user = request.state.user
-    api_key = os.getenv("GROQ_API_KEY")
+    api_key = GROQ_API_KEY
     if not api_key:
         raise APIError(
             error_code=ErrorCode.MISSING_API_KEY,

@@ -1,10 +1,9 @@
 
-import os
-
 from fastapi_mail import ConnectionConfig
+from utils.constant import GMAIL_USER, GMAIL_APP_PASSWORD
 
-MY_EMAIL = os.getenv("GMAIL_USER")
-MY_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
+MY_EMAIL = GMAIL_USER
+MY_APP_PASSWORD = GMAIL_APP_PASSWORD
 
 
 

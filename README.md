@@ -46,7 +46,7 @@ An intelligent FastAPI-based application that helps candidates prepare for inter
 │   ├── schemas/
 │   └── utils/
 
-├── JobMaching/                     # Resume-Job Matching
+├── JobMatching/                    # Resume-Job Matching
 │   ├── api/
 │   │   └── analyse.py             # POST /api/analyseresume
 │   ├── analyser/

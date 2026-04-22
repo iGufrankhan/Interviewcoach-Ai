@@ -8,8 +8,8 @@ from Models.interviewservice.interview_models import InterviewSession
 from Models.userReg.user import User
 from utils.apierror import APIError
 from utils.apiresponse import success_response, error_response
+from utils.constant import GROQ_API_KEY
 from interviewService.schema.interviewservice import StartInterviewRequest, SubmitAnswerRequest, SubmitInterviewRequest
-import os
 
 router = APIRouter(
     prefix="/api/interview",
@@ -25,7 +25,7 @@ async def start_interview(req: StartInterviewRequest, request: Request):
     user = request.state.user
     """Start a new interview session and generate 2 questions"""
     try:
-        api_key = os.getenv("GROQ_API_KEY")
+        api_key = GROQ_API_KEY
         if not api_key:
             raise APIError(status_code=400, message="API key is required", error_code="MISSING_API_KEY")
         
@@ -153,7 +153,7 @@ async def submit_interview(req: SubmitInterviewRequest, request: Request):
             )
         
         # Analyze and score all answers
-        api_key = os.getenv("GROQ_API_KEY")
+        api_key = GROQ_API_KEY
         analyzer = AnalysisAnswer(api_key)
         
         analysis_result = analyzer.batch_analyze_and_score(
@@ -276,7 +276,7 @@ async def transcribe_audio(req: dict, request: Request):
                 error_code="MISSING_AUDIO_DATA"
             )
         
-        api_key = os.getenv("GROQ_API_KEY")
+        api_key = GROQ_API_KEY
         if not api_key:
             raise APIError(
                 status_code=400,

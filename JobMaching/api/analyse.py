@@ -4,7 +4,7 @@ from JobMaching.analyser.resumeanalise import JobMatchingService
 from utils.apierror import APIError
 from utils.error_codes import ErrorCode
 from utils.apiresponse import success_response
-import os
+from utils.constant import GROQ_API_KEY
 import logging
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ async def analyse_resume(request: Request, req_body: AnalyseResumeRequest):
 
     user = request.state.user
     
-    api_key = os.getenv("GROQ_API_KEY")
+    api_key = GROQ_API_KEY
     if not api_key:
         logger.error("GROQ_API_KEY not configured")
         raise APIError(

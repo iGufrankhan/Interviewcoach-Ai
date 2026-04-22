@@ -4,7 +4,7 @@ from slowapi.util import get_remote_address
 from chat_agent.chatBotService.chatBotservice import ChatBotService
 from utils.apiresponse import success_response, error_response
 from utils.apierror import APIError
-import os
+from utils.constant import GROQ_API_KEY
 from chat_agent.schema.chatBot import CreateSessionRequest, SendMessageRequest, GetMessagesRequest
 
 limiter = Limiter(key_func=get_remote_address)
@@ -22,7 +22,7 @@ async def create_session(req: CreateSessionRequest, request: Request):
     """Create a new chat session"""
     user = request.state.user
     try:
-        api_key = os.getenv("GROQ_API_KEY")
+        api_key = GROQ_API_KEY
         if not api_key:
             return error_response(
                 message="GROQ_API_KEY is not configured",
@@ -58,7 +58,7 @@ async def send_message(req: SendMessageRequest, request: Request):
     """Send message and get AI response - Rate limited to 10/minute"""
     user = request.state.user
     try:
-        api_key = os.getenv("GROQ_API_KEY")
+        api_key = GROQ_API_KEY
         if not api_key:
             return error_response(
                 message="GROQ_API_KEY is not configured",
@@ -102,7 +102,7 @@ async def get_sessions(request: Request):
     """Get all chat sessions for user"""
     user = request.state.user
     try:
-        api_key = os.getenv("GROQ_API_KEY")
+        api_key = GROQ_API_KEY
         if not api_key:
             return error_response(
                 message="GROQ_API_KEY is not configured",
@@ -136,7 +136,7 @@ async def get_session_history(session_id: str, limit: int = 100, skip: int = 0, 
         if skip < 0:
             skip = 0
         
-        api_key = os.getenv("GROQ_API_KEY")
+        api_key = GROQ_API_KEY
         if not api_key:
             return error_response(
                 message="GROQ_API_KEY is not configured",
@@ -179,7 +179,7 @@ async def get_session_stats(session_id: str, request: Request):
     """Get statistics for a chat session"""
     user = request.state.user
     try:
-        api_key = os.getenv("GROQ_API_KEY")
+        api_key = GROQ_API_KEY
         if not api_key:
             return error_response(
                 message="GROQ_API_KEY is not configured",
@@ -217,7 +217,7 @@ async def delete_session(session_id: str, request: Request):
     """Delete a chat session and all its messages"""
     user = request.state.user
     try:
-        api_key = os.getenv("GROQ_API_KEY")
+        api_key = GROQ_API_KEY
         if not api_key:
             return error_response(
                 message="GROQ_API_KEY is not configured",

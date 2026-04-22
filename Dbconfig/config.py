@@ -1,114 +1,129 @@
+"""
+MongoDB database connection management.
+"""
+
 import os
 import time
 import logging
+import atexit
+import signal
 from dotenv import load_dotenv
-from mongoengine import connect, ConnectionError as MongoConnectionError
-from pymongo.errors import ServerSelectionTimeoutError
+from mongoengine import connect, disconnect
+from pymongo.errors import PyMongoError
+from utils.constant import DATABASE_URL, DATABASE_NAME
 
-# Configure logging
 logger = logging.getLogger(__name__)
-
-# Load environment variables from .env file
 load_dotenv()
 
-# Get the MongoDB connection URI from environment variables
-uri = os.getenv("DATABASE_URL")
-db_name = os.getenv("DATABASE_NAME", "interviewcoach")
-
-# Connection state tracking
-_db_connection_status = {
-    "connected": False,
-    "error": None,
-    "last_attempt": None,
-    "retry_count": 0
-}
+MAX_RETRIES = 3
+RETRY_INTERVAL = 5
 
 
-def _connect_with_retry(max_retries: int = 3, base_delay: float = 1.0) -> bool:
-    """
-    Attempt to connect to MongoDB with exponential backoff retry logic.
+class DatabaseConnection:
+    """MongoDB connection manager with automatic retry and reconnection logic."""
     
-    Args:
-        max_retries: Maximum number of connection attempts
-        base_delay: Initial delay between retries in seconds
+    def __init__(self):
+        self.retry_count = 0
+        self.is_connected = False
+        self.mongo_uri = DATABASE_URL
+        self.db_name = DATABASE_NAME
         
-    Returns:
-        bool: True if connection successful, False otherwise
-    """
-    if not uri:
-        logger.error("DATABASE_URL environment variable not set")
-        _db_connection_status["error"] = "DATABASE_URL not configured"
-        return False
+        self._register_signal_handlers()
+        self._register_exit_handler()
     
-    for attempt in range(max_retries):
+    def _register_signal_handlers(self):
+        """Register handlers for graceful shutdown."""
+        signal.signal(signal.SIGINT, self._handle_shutdown)
+        signal.signal(signal.SIGTERM, self._handle_shutdown)
+    
+    def _register_exit_handler(self):
+        """Register handler for program exit."""
+        atexit.register(self._handle_shutdown)
+    
+    def _handle_shutdown(self, signum=None, frame=None):
+        """Handle application termination gracefully."""
         try:
-            logger.info(f"Attempting MongoDB connection (attempt {attempt + 1}/{max_retries})...")
+            logger.info("Closing MongoDB connection...")
+            disconnect()
+            logger.info("✓ MongoDB connection closed")
+        except Exception as e:
+            logger.error(f"Error during database disconnection: {e}")
+        finally:
+            if signum is not None:
+                exit(0)
+    
+    async def connect(self):
+        """Connect to MongoDB with retry logic."""
+        try:
+            if not self.mongo_uri:
+                raise ValueError("MongoDB URI is not defined in environment variables")
+            
+            logger.info(f"Attempting MongoDB connection to {self.mongo_uri.split('@')[-1]}...")
+            
             connect(
-                db=db_name,
-                host=uri,
+                db=self.db_name,
+                host=self.mongo_uri,
                 serverSelectionTimeoutMS=5000,
                 connectTimeoutMS=10000,
-                retryWrites=True
+                retryWrites=True,
+                maxPoolSize=10,
             )
-            logger.info("✓ Successfully connected to MongoDB via MongoEngine!")
-            _db_connection_status["connected"] = True
-            _db_connection_status["error"] = None
-            _db_connection_status["retry_count"] = attempt
-            return True
             
-        except (MongoConnectionError, ServerSelectionTimeoutError) as e:
-            _db_connection_status["error"] = str(e)
-            _db_connection_status["last_attempt"] = time.time()
+            self.is_connected = True
+            self.retry_count = 0
+            logger.info("✅ MongoDB connected successfully")
             
-            if attempt < max_retries - 1:
-                delay = base_delay * (2 ** attempt)  # Exponential backoff
-                logger.warning(
-                    f"MongoDB connection failed (attempt {attempt + 1}/{max_retries}). "
-                    f"Retrying in {delay}s... Error: {e}"
-                )
-                time.sleep(delay)
-            else:
-                logger.error(
-                    f"Failed to connect to MongoDB after {max_retries} attempts. "
-                    f"Error: {e}. App will continue but database operations will fail."
-                )
-                return False
-                
+        except PyMongoError as e:
+            logger.error(f"MongoDB connection error: {e}")
+            self.is_connected = False
+            await self._handle_connection_error()
         except Exception as e:
-            logger.error(f"Unexpected error during MongoDB connection: {e}")
-            _db_connection_status["error"] = str(e)
-            return False
+            logger.error(f"Failed to connect to MongoDB: {e}")
+            self.is_connected = False
+            await self._handle_connection_error()
     
-    return False
+    async def _handle_connection_error(self):
+        """Handle connection errors with retry logic."""
+        if self.retry_count < MAX_RETRIES:
+            self.retry_count += 1
+            logger.warning(
+                f"Retrying connection... Attempt {self.retry_count}/{MAX_RETRIES} "
+                f"in {RETRY_INTERVAL}s"
+            )
+            await self._async_sleep(RETRY_INTERVAL)
+            await self.connect()
+        else:
+            logger.error(f"Failed to connect to MongoDB after {MAX_RETRIES} attempts")
+    
+    @staticmethod
+    async def _async_sleep(seconds):
+        """Async sleep wrapper."""
+        time.sleep(seconds)
+    
+    def get_connection_status(self) -> dict:
+        """Get current connection status."""
+        return {
+            "is_connected": self.is_connected,
+            "retry_count": self.retry_count,
+            "mongo_uri": self.mongo_uri.split('@')[-1] if '@' in self.mongo_uri else self.mongo_uri,
+            "db_name": self.db_name
+        }
+
+
+db_connection = DatabaseConnection()
+
+
+async def init_db():
+    """Initialize database connection at startup."""
+    await db_connection.connect()
+
+
+def get_db_status() -> dict:
+    """Get database connection status."""
+    return db_connection.get_connection_status()
 
 
 def is_database_connected() -> bool:
-    """Check if database is currently connected"""
-    return _db_connection_status["connected"]
-
-
-def get_connection_status() -> dict:
-    """Get detailed database connection status"""
-    return {
-        "connected": _db_connection_status["connected"],
-        "error": _db_connection_status["error"],
-        "last_attempt": _db_connection_status["last_attempt"],
-        "retry_count": _db_connection_status["retry_count"]
-    }
-
-
-def retry_connection() -> bool:
-    """
-    Retry database connection at runtime.
-    Useful if DB was temporarily down during startup.
-    
-    Returns:
-        bool: True if connection successful
-    """
-    logger.info("Attempting runtime database reconnection...")
-    return _connect_with_retry(max_retries=2, base_delay=0.5)
-
-
-# Attempt initial connection without blocking app startup
-_connect_with_retry(max_retries=3, base_delay=1.0)
+    """Check if database is connected."""
+    return db_connection.is_connected
 
