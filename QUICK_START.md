@@ -49,6 +49,7 @@ pip install -r requirements.txt
 echo DATABASE_URL=mongodb://localhost:27017/interviewcoach > .env
 echo DATABASE_NAME=interviewcoach >> .env
 echo GROQ_API_KEY=your_api_key_here >> .env
+echo HF_TOKEN=your_huggingface_token_here >> .env
 echo JWT_SECRET=your_jwt_secret_key >> .env
 echo SMTP_EMAIL=your_email@gmail.com >> .env
 echo SMTP_PASSWORD=your_app_password >> .env

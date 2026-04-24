@@ -9,12 +9,12 @@ from utils.apierror import APIError
 
 class InterviewDataLoader:
     
-    def extract_job_info(self, job_description: str, api_key: str, resume_id: str) -> str:
+    async def extract_job_info(self, job_description: str, api_key: str, resume_id: str) -> str:
         try:
             job_loader = JobDescriptionLoader()
             job_info = job_loader.load_job_description(job_description)
             
-            resume_doc = Resume_data.objects(id=resume_id).first()
+            resume_doc = await Resume_data.async_find_one(id=resume_id)
             if resume_doc is None:
                 raise APIError(status_code=400, message=f"Resume not found for ID: {resume_id}", error_code="RESUME_NOT_FOUND")
             

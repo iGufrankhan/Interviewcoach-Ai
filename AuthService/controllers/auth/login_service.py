@@ -10,7 +10,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 async def login_user(email: str, password: str):
     """Login with email and password."""
-    user = User.objects(email=email).first()
+    user = await User.async_find_one(email=email)
     
     
 
@@ -33,7 +33,7 @@ async def login_user(email: str, password: str):
     refresh_token = create_refresh_token(user_id=str(user.id))
     
     user.RefreshToken = refresh_token
-    user.save()
+    await user.async_save()
     
     
     return success_response(
@@ -67,7 +67,7 @@ async def Refreshtoken(refresh_token: str):
         payload = verify_access_token(refresh_token)
         user_id = payload.get("user_id")
         
-        user = User.objects(id=user_id).first()
+        user = await User.async_find_one(id=user_id)
         if not user or user.RefreshToken != refresh_token:
             raise APIError(
                 status_code=401,
@@ -78,7 +78,7 @@ async def Refreshtoken(refresh_token: str):
         # Generate new access token
         new_access_token = create_access_token(user_id=str(user.id))
         user.RefreshToken = refresh_token
-        user.save()
+        await user.async_save()
         return success_response(
             message="Access token refreshed successfully",
             data={

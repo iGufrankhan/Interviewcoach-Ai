@@ -1,71 +1,110 @@
-
 import hashlib
 import json
+import os
+import time
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from utils.apierror import APIError
-
-# Configuration constants
-RAG_CHUNK_SIZE = 500
-RAG_CHUNK_OVERLAP = 100
-RAG_RETRIEVER_K = 5  # Number of similar chunks to retrieve
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-
-
+from utils.constant import (EMBEDDING_MODEL, HF_TOKEN, RAG_CHUNK_SIZE, RAG_CHUNK_OVERLAP, RAG_RETRIEVER_K,CACHE_TTL)
 class RagData:
-    # Class-level cache for FAISS retrievers - prevents re-embedding same resumes
+    # Cache with TTL: {hash: (retriever, timestamp)}
     _cache = {}
     """
     Data preparation for RAG-based job matching analysis
-    - Loads and processes resume and job description data
-    - Supports both LLM-only and Hybrid RAG modes
-    - Handles errors gracefully with detailed logging
+    - Caches FAISS retrievers with 1-hour TTL
+    - Automatic expiration prevents stale embeddings
     """
     
     def __init__(self, job_description: str, resume_data: dict = None):
-        """
-        Initialize RAG data processor
-        
-        Args:
-            job_description: Job description text
-            resume_data: Resume data dictionary
-        """
         self.job_description = job_description
         self.resume_data = resume_data or {}
-        self.embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+        self.embeddings = HuggingFaceEmbeddings(
+            model_name=EMBEDDING_MODEL,
+            huggingfacehub_api_token=HF_TOKEN if HF_TOKEN else None
+        )
+    
+    @classmethod
+    def _is_cache_expired(cls, cache_entry: tuple) -> bool:
+        """Check if cache entry has expired
         
+        Args:
+            cache_entry: (retriever, timestamp) tuple
+            
+        Returns:
+            True if expired, False if still valid
+        """
+        if cache_entry is None:
+            return True
         
+        retriever, timestamp = cache_entry
+        elapsed_seconds = time.time() - timestamp
+        
+        if elapsed_seconds > CACHE_TTL:
+            print(f"[RAG] Cache expired after {elapsed_seconds:.0f}s (TTL: {CACHE_TTL}s)")
+            return True
+        
+        return False
+    
+    @classmethod
+    def _cleanup_expired_cache(cls):
+        """Remove expired entries from cache
+        
+        Run periodically to prevent memory buildup
+        """
+        current_time = time.time()
+        expired_keys = []
+        
+        for cache_hash, cache_entry in cls._cache.items():
+            _, timestamp = cache_entry
+            if current_time - timestamp > CACHE_TTL:
+                expired_keys.append(cache_hash)
+        
+        for cache_hash in expired_keys:
+            del cls._cache[cache_hash]
+            print(f"[RAG] Removed expired cache entry: {cache_hash}")
+        
+        if expired_keys:
+            print(f"[RAG] Cleanup: Removed {len(expired_keys)} expired entries. Cache size now: {len(cls._cache)}")
+    
     def prepare_for_rag(self):
         """
-        Prepare resume data for RAG analysis
-        - Chunks resume data as documents
-        - Creates vector embeddings using HuggingFace models
-        - Stores ONLY resume documents in FAISS vector DB
-        - Job description is used during LLM comparison, not in FAISS
-        - CACHES retrieved to avoid re-embedding same resume multiple times
+        Prepare resume data for RAG analysis with TTL caching
         
         Returns:
-            FAISS retriever for semantic search on resume data
+            FAISS retriever for semantic search
         """
         try:
-            # Create stable hash of resume data for caching (sorted JSON to ensure consistency)
+            # Create stable hash of resume data
             resume_json = json.dumps(self.resume_data, sort_keys=True, default=str)
             resume_hash = hashlib.md5(resume_json.encode()).hexdigest()
             
-            # Check if already computed and cached
+            # Check if cached AND not expired
             if resume_hash in self._cache:
-                print(f"[RAG] Cache HIT for resume hash: {resume_hash}. Reusing cached FAISS index.")
-                return self._cache[resume_hash]
+                cache_entry = self._cache[resume_hash]
+                
+                if not self._is_cache_expired(cache_entry):
+                    retriever, timestamp = cache_entry
+                    age_seconds = time.time() - timestamp
+                    print(f"[RAG] Cache HIT for resume hash: {resume_hash} (age: {age_seconds:.0f}s)")
+                    return retriever
+                else:
+                    # Cache expired, remove it
+                    del self._cache[resume_hash]
+                    print(f"[RAG] Cache EXPIRED for resume hash: {resume_hash}")
             
+            # Periodically clean up expired entries
+            if len(self._cache) % 10 == 0:  # Every 10 new entries
+                self._cleanup_expired_cache()
+            
+            # Cache miss or expired - create new embeddings
             text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=RAG_CHUNK_SIZE,
                 chunk_overlap=RAG_CHUNK_OVERLAP,
                 separators=["\n\n", "\n", ". ", " ", ""]
             )
             
-         
             documents = []
             
             if self.resume_data:
@@ -84,7 +123,7 @@ class RagData:
                     error_code="NO_RESUME_DATA"
                 )
             
-           
+            # Create FAISS vector store
             vector_store = FAISS.from_documents(
                 documents=documents,
                 embedding=self.embeddings
@@ -92,9 +131,8 @@ class RagData:
             
             retriever = vector_store.as_retriever(search_kwargs={"k": RAG_RETRIEVER_K})
             
-            # Cache the retriever for future use
-            self._cache[resume_hash] = retriever
-            print(f"[RAG] Cached FAISS index for resume hash: {resume_hash}. Cache size: {len(self._cache)}. Total documents indexed: {len(documents)}")
+            self._cache[resume_hash] = (retriever, time.time())
+            print(f"[RAG] Cached FAISS index for resume hash: {resume_hash} (TTL: {CACHE_TTL}s). Cache size: {len(self._cache)}")
             
             return retriever
             
@@ -140,24 +178,52 @@ class RagData:
     
     @classmethod
     def get_cache_status(cls):
-        """Get cache status for debugging"""
-        return {
-            "cache_size": len(cls._cache),
-            "cached_hashes": list(cls._cache.keys())
+        """Get cache status for monitoring"""
+        current_time = time.time()
+        cache_info = {
+            "total_cached": len(cls._cache),
+            "entries": []
         }
+        
+        for cache_hash, cache_entry in cls._cache.items():
+            _, timestamp = cache_entry
+            age_seconds = current_time - timestamp
+            is_expired = age_seconds > CACHE_TTL
+            
+            cache_info["entries"].append({
+                "hash": cache_hash,
+                "age_seconds": f"{age_seconds:.0f}",
+                "expired": is_expired,
+                "ttl_remaining": f"{max(0, CACHE_TTL - age_seconds):.0f}"
+            })
+        
+        return cache_info
     
     @classmethod
     def clear_cache(cls):
-        """Clear all cached retrievers - use for testing or memory management"""
+        """Clear all cached retrievers"""
         cls._cache.clear()
         print("[RAG] Cache cleared successfully")
+    
+    @classmethod
+    def force_refresh_cache(cls, resume_hash: str = None):
+        """Force refresh specific cache entry or all entries
         
-        
-        
-            
-            
-            
+        Args:
+            resume_hash: Specific hash to refresh, or None for all
+        """
+        if resume_hash and resume_hash in cls._cache:
+            del cls._cache[resume_hash]
+            print(f"[RAG] Forced refresh for hash: {resume_hash}")
+        elif resume_hash is None:
+            cls._cache.clear()
+            print("[RAG] Forced refresh: Cleared all cached entries")
 
-    
-    
-    
+
+
+
+
+
+
+
+

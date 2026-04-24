@@ -37,5 +37,14 @@ CORS_ORIGINS = os.getenv(
 ).split(",")
 
 
+RAG_CHUNK_SIZE = int(os.getenv("RAG_CHUNK_SIZE", "500"))
+RAG_CHUNK_OVERLAP = int(os.getenv("RAG_CHUNK_OVERLAP", "100"))
+RAG_RETRIEVER_K = int(os.getenv("RAG_RETRIEVER_K", "5"))
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+HF_TOKEN = os.getenv("HF_TOKEN")
+CACHE_TTL = int(os.getenv("CACHE_TTL", "3600"))  # 1 hour expiration (in seconds)   
+
+
+
 
 

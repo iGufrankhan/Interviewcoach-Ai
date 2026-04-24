@@ -26,7 +26,9 @@ async def send_otp_email(email: str, purpose: str = "registration"):
             error_code="EMAIL_CONFIG_MISSING"
         )
 
-    OTP.objects(email=email, purpose=purpose).delete()
+    existing_otps = await OTP.async_find(email=email, purpose=purpose)
+    for otp_obj in existing_otps:
+        await OTP.async_delete(id=otp_obj.id)
 
     otp_entry = OTP(
         email=email,
@@ -34,7 +36,7 @@ async def send_otp_email(email: str, purpose: str = "registration"):
         purpose=purpose,
         expires_at=expires_at
     )
-    otp_entry.save()
+    await otp_entry.async_save()
 
     message = MessageSchema(
         subject="Your OTP Code for Interview Coach AI",

@@ -13,7 +13,7 @@ router=APIRouter(
 async def delete_resume(resume_id:str, request: Request):
     user = request.state.user
     try:
-        resume=Resume_data.objects(id=resume_id).first()
+        resume = await Resume_data.async_find_one(id=resume_id)
         if not resume:
             return error_response(
                 message="Resume Not Found",
@@ -29,7 +29,7 @@ async def delete_resume(resume_id:str, request: Request):
                 status_code=403
             )
         
-        resume.delete()
+        await Resume_data.async_delete(id=resume_id)
         return success_response(
             message="Resume deleted successfully",
             data={"id": str(resume_id)},

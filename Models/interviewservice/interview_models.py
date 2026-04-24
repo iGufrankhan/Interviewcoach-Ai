@@ -1,9 +1,10 @@
-from mongoengine import Document, ReferenceField, ListField, StringField, IntField, FloatField, DateTimeField, DictField
+from mongoengine import ReferenceField, ListField, StringField, IntField, FloatField, DateTimeField, DictField
 from datetime import datetime
+from utils.async_model import AsyncDocument
 from Models.userReg.user import User
 
 
-class InterviewSession(Document):
+class InterviewSession(AsyncDocument):
     """Store complete interview session with all Q&A and scores"""
     meta = {'collection': 'interview_sessions'}
     
@@ -24,7 +25,7 @@ class InterviewSession(Document):
     created_at = DateTimeField(default=datetime.now)
     completed_at = DateTimeField()
     
-    def add_question_answer(self, question: str, answer: str, score: float = 0, feedback: str = ""):
+    async def add_question_answer(self, question: str, answer: str, score: float = 0, feedback: str = ""):
         """Add a question-answer pair with score and feedback"""
         self.question_answers.append({
             "question": question,
@@ -32,9 +33,9 @@ class InterviewSession(Document):
             "score": score,
             "feedback": feedback
         })
-        self.save()
+        await self.async_save()
     
-    def calculate_total_score(self):
+    async def calculate_total_score(self):
         """Calculate total score after all answers are scored"""
         if not self.question_answers:
             return 0
@@ -43,7 +44,7 @@ class InterviewSession(Document):
         self.total_score = total
         self.status = "completed"
         self.completed_at = datetime.now()
-        self.save()
+        await self.async_save()
         return total
     
     def get_average_score(self):

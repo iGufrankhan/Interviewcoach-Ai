@@ -56,7 +56,7 @@ async def analyse_resume(request: Request, req_body: AnalyseResumeRequest):
             description=req_body.description,
             use_rag=req_body.use_rag
         )
-        analysis_result = resume_service.analyze()
+        analysis_result = await resume_service.analyze()
         
         return success_response(
             message="Resume analysis completed successfully",

@@ -14,10 +14,10 @@ async def logout_user(refresh_token: str):
             payload = verify_refresh_token(refresh_token)
             user_id = payload.get("user_id")
             if user_id:
-                user= User.objects(id=user_id).first()
+                user = await User.async_find_one(id=user_id)
                 if user and user.RefreshToken == refresh_token:
                      user.RefreshToken = None
-                     user.save()
+                     await user.async_save()
                 return success_response(
                     message="User logged out successfully",
                     status_code=200

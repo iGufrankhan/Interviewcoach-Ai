@@ -12,13 +12,13 @@ class CompareService:
         self.description = description
         self.job_loader = JobDescriptionLoader()
     
-    def get_data(self):
+    async def get_data(self):
         if not self.description:
             raise APIError(status_code=400, message="Job description is required", error_code="MISSING_DESCRIPTION")
         
        
         try:
-            resume_doc = Resume_data.objects(id=self.resume_id).first()
+            resume_doc = await Resume_data.async_find_one(id=self.resume_id)
             if resume_doc is None:
                 raise APIError(status_code=400, message=f"Resume not found for ID: {self.resume_id}", error_code="RESUME_NOT_FOUND")
             

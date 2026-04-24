@@ -13,7 +13,7 @@ def generate_username(email: str) -> str:
     return generated_username
 
 
-def generate_unique_username(email: str, full_name: str = ""):
+async def generate_unique_username(email: str, full_name: str = ""):
     """Generate a unique username from email and optional full name."""
     if full_name:
         base_username = full_name.split()[0].lower()[:8]
@@ -25,7 +25,7 @@ def generate_unique_username(email: str, full_name: str = ""):
     username = f"{base_username}_{suffix}"
     
     # Check if username exists
-    while User.objects(username=username).first():
+    while await User.async_find_one(username=username):
         suffix = "".join(random.choices(string.digits, k=4))
         username = f"{base_username}_{suffix}"
     

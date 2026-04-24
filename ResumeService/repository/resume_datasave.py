@@ -6,14 +6,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def save_resume(resume_data, user_id):
+async def save_resume(resume_data, user_id):
     """Saves the structured resume data to the database."""
     try:
         logger.info(f"💾 Saving resume for user: {user_id}")
         logger.info(f"   Resume data keys: {resume_data.keys() if isinstance(resume_data, dict) else 'N/A'}")
         
         # user_id is now the email (from JWT token)
-        user = User.objects(email=user_id).first()
+        user = await User.async_find_one(email=user_id)
         
         if not user:
             logger.error(f"❌ User not found: {user_id}")
@@ -35,7 +35,7 @@ def save_resume(resume_data, user_id):
             projects=_ensure_list(resume_data.get("projects")),
         )
         logger.info(f"   Resume object created, saving to database...")
-        resume_doc.save()
+        await resume_doc.async_save()
         logger.info(f"✅ Resume saved successfully with ID: {resume_doc.id}")
         return create_resume_schema(resume_doc)
     
@@ -50,10 +50,10 @@ def save_resume(resume_data, user_id):
         )
 
 
-def get_resume_by_id(resume_id):
+async def get_resume_by_id(resume_id):
     """Fetch resume by ID"""
     try:
-        resume = Resume_data.objects(id=resume_id).first()
+        resume = await Resume_data.async_find_one(id=resume_id)
         if not resume:
             raise APIError(
                 status_code=404,
@@ -71,11 +71,11 @@ def get_resume_by_id(resume_id):
         )
 
 
-def get_user_resumes(user_id):
+async def get_user_resumes(user_id):
     """Fetch all resumes for a user"""
     try:
         # user_id is now the email (from JWT token)
-        user = User.objects(email=user_id).first()
+        user = await User.async_find_one(email=user_id)
         if not user:
             raise APIError(
                 status_code=404,
@@ -83,7 +83,7 @@ def get_user_resumes(user_id):
                 error_code="USER_NOT_FOUND"
             )
         
-        resumes = Resume_data.objects(user=user)
+        resumes = await Resume_data.async_find(user=user)
         return [create_resume_schema(r) for r in resumes]
     except APIError:
         raise

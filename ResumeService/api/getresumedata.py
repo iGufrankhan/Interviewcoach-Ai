@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Query
 from utils.apiresponse import success_response,error_response
+from utils.apierror import APIError
 from Models.resumeservice.resume_models import Resume_data
 from Models.userReg.user import User
 
@@ -9,31 +10,40 @@ router=APIRouter(
 
 
 @router.get("/user-resumes")
-async def get_user_resumes(request: Request):
-    """Get all resumes for the authenticated user"""
+async def get_user_resumes(
+    request: Request,
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=100, description="Items per page (1-100)")
+):
+    """Get paginated resumes for authenticated user"""
     try:
         # Use authenticated user's email
         user = request.state.user
         actual_user_email = user.email
         
-        # Find user by email
-        user_obj = User.objects(email=actual_user_email).first()
+        user_obj = await User.async_find_one(email=actual_user_email)
         if not user_obj:
+            raise APIError(status_code=404, message="User not found", error_code="USER_NOT_FOUND")
+        
+        total = await Resume_data.async_count(user=user_obj)
+        
+        if total == 0:
             return success_response(
                 message="No resumes found for this user",
-                data=[],
+                data={
+                    "resumes": [],
+                    "pagination": {
+                        "page": page,
+                        "limit": limit,
+                        "total": 0,
+                        "total_pages": 0
+                    }
+                },
                 status_code=200
             )
         
-        # Query by user reference
-        resumes = Resume_data.objects(user=user_obj)
-        
-        if not resumes:
-            return success_response(
-                message="No resumes found for this user",
-                data=[],
-                status_code=200
-            )
+        skip = (page - 1) * limit
+        resumes = await Resume_data.async_find(skip=skip, limit=limit, user=user_obj)
         
         resumes_list = []
         for resume in resumes:
@@ -50,7 +60,15 @@ async def get_user_resumes(request: Request):
         
         return success_response(
             message="Resumes found",
-            data=resumes_list,
+            data={
+                "resumes": resumes_list,
+                "pagination": {
+                    "page": page,
+                    "limit": limit,
+                    "total": total,
+                    "total_pages": (total + limit - 1) // limit
+                }
+            },
             status_code=200
         )
     except Exception as e:
@@ -64,7 +82,7 @@ async def get_user_resumes(request: Request):
 async def get_resume(resume_id:str, request: Request):
     user = request.state.user
     try:
-        resume=Resume_data.objects(id=resume_id).first()
+        resume = await Resume_data.async_find_one(id=resume_id)
         if not resume:
             return error_response(
                 message="Resume Not Found",

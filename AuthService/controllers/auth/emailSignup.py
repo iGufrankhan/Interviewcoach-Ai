@@ -17,7 +17,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 async def initializeemailsignup(email: str):
     """Step 1: Send OTP to email or notify if user already exists."""
-    user = User.objects(email=email).first()
+    user = await User.async_find_one(email=email)
 
     # Check if user already exists
     if user:
@@ -44,10 +44,10 @@ async def initializeemailsignup(email: str):
 
 async def verifyotp(email: str, otp: str):
     """Step 2: Verify OTP and return short-lived registration token."""
-    otp_entry = OTP.objects(
+    otp_entry = await OTP.async_find_one(
         email=email,
         purpose="registration"
-    ).order_by("-created_at").first()
+    )
 
     if not otp_entry:
         raise APIError(
@@ -57,7 +57,7 @@ async def verifyotp(email: str, otp: str):
         )
 
     if otp_entry.expires_at < datetime.now(timezone.utc).replace(tzinfo=None):
-        otp_entry.delete()
+        await OTP.async_delete(id=otp_entry.id)
         raise APIError(
             status_code=400,
             message="Invalid or expired OTP",
@@ -71,7 +71,7 @@ async def verifyotp(email: str, otp: str):
             error_code="OTP_INVALID_OR_EXPIRED"
         )
 
-    otp_entry.delete()
+    await OTP.async_delete(id=otp_entry.id)
    
 
     registration_token = create_access_token(user_id=f"reg:{email}")
@@ -84,7 +84,7 @@ async def verifyotp(email: str, otp: str):
 
 async def resend_otp(email: str):
     """Resend OTP to email if user is still in registration flow."""
-    user = User.objects(email=email).first()
+    user = await User.async_find_one(email=email)
 
     # Do not reveal whether email exists.
     if user:
@@ -136,7 +136,7 @@ async def complete_registration(email: str, password: str, fullname: str, regist
             error_code="REGISTRATION_TOKEN_EMAIL_MISMATCH"
         )
 
-    existing_user = User.objects(email=email).first()
+    existing_user = await User.async_find_one(email=email)
     if existing_user:
         raise APIError(
             status_code=409,
@@ -144,7 +144,7 @@ async def complete_registration(email: str, password: str, fullname: str, regist
             error_code="EMAIL_EXISTS"
         )
 
-    username = generate_unique_username(email)
+    username = await generate_unique_username(email)
     password_hash = pwd_context.hash(password[:72])
 
     new_user = User(
@@ -160,7 +160,7 @@ async def complete_registration(email: str, password: str, fullname: str, regist
     access_token = create_access_token(user_id=str(new_user.id))
     refresh_token = create_refresh_token(user_id=str(new_user.id))
     new_user.RefreshToken = refresh_token
-    new_user.save()
+    await new_user.async_save()
     
  
     return success_response(

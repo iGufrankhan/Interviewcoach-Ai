@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Query
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from chat_agent.chatBotService.chatBotservice import ChatBotService
@@ -98,8 +98,28 @@ async def send_message(req: SendMessageRequest, request: Request):
 
 
 @router.get("/sessions")
-async def get_sessions(request: Request):
-    """Get all chat sessions for user"""
+async def get_sessions(
+    request: Request,
+    page: int = Query(1, ge=1, description="Page number (starts at 1)"),
+    limit: int = Query(10, ge=1, le=100, description="Items per page (1-100)")
+):
+    """Get chat sessions for user with pagination
+    
+    Args:
+        page: Page number (1-indexed)
+        limit: Items per page (max 100 to prevent large queries)
+    
+    Returns:
+        {
+            "sessions": [...],
+            "pagination": {
+                "page": 1,
+                "limit": 10,
+                "total": 1000,
+                "total_pages": 100
+            }
+        }
+    """
     user = request.state.user
     try:
         api_key = GROQ_API_KEY
@@ -111,12 +131,27 @@ async def get_sessions(request: Request):
             )
         
         service = ChatBotService(api_key, user.email)
-        sessions = service.get_all_sessions()
+    
+        # Get total count for pagination metadata
+        total = service.get_sessions_count()
+        
+        # Calculate skip for database query
+        skip = (page - 1) * limit
+        
+        # Get paginated sessions
+        sessions = service.get_all_sessions(skip=skip, limit=limit)
         
         return success_response(
             message="Sessions retrieved",
-            data=sessions,
-            status_code=200
+            data={
+                "sessions": sessions,
+                "pagination": {
+                    "page": page,
+                    "limit": limit,
+                    "total": total,
+                    "total_pages": (total + limit - 1) // limit
+                }
+            }
         )
     except Exception as e:
         return error_response(
@@ -127,15 +162,21 @@ async def get_sessions(request: Request):
 
 
 @router.get("/session/{session_id}")
-async def get_session_history(session_id: str, limit: int = 100, skip: int = 0, request: Request = None):
-    """Get chat history for a session with pagination"""
+async def get_session_history(
+    session_id: str,
+    request: Request,
+    limit: int = Query(100, ge=1, le=500, description="Max messages to return (1-500)"),
+    skip: int = Query(0, ge=0, description="Messages to skip for pagination")
+):
+    """Get chat history for a session with pagination
+    
+    Args:
+        session_id: Chat session ID
+        limit: Number of messages to return (1-500, default 100)
+        skip: Number of messages to skip (default 0)
+    """
     user = request.state.user
     try:
-        if limit > 500:
-            limit = 500
-        if skip < 0:
-            skip = 0
-        
         api_key = GROQ_API_KEY
         if not api_key:
             return error_response(
@@ -247,4 +288,3 @@ async def delete_session(session_id: str, request: Request):
             error_code="SESSION_DELETE_ERROR",
             status_code=500
         )
-        

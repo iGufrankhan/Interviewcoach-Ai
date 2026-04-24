@@ -31,7 +31,7 @@ async def generate_questions(description: str, resume_id: str, request: Request)
     if not description or len(description.strip()) < 50:
         raise APIError(error_code=ErrorCode.INVALID_JOB_DESCRIPTION)
     
-    resume = Resume_data.objects(id=resume_id).first()
+    resume = await Resume_data.async_find_one(id=resume_id)
     if not resume:
         raise APIError(
             error_code=ErrorCode.RESUME_NOT_FOUND,

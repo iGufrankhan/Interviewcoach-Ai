@@ -152,11 +152,14 @@ pip install -r requirements.txt
 Create a `.env` file in the project root:
 ```env
 GROQ_API_KEY=your_groq_api_key_here
+HF_TOKEN=your_huggingface_token_here
 MONGODB_URI=mongodb://localhost:27017/interviewcoach
 JWT_SECRET=your_secret_key_here
 SMTP_EMAIL=your_email@gmail.com
 SMTP_PASSWORD=your_app_password
 ```
+
+**HF_TOKEN**: Get from https://huggingface.co/settings/tokens (free account)
 
 ### 5. Start MongoDB
 ```bash
@@ -402,6 +405,34 @@ Response: 10 targeted interview questions
   - Interview question explanations
   - Resume improvement suggestions
   - Behavioral question preparation
+
+### Embeddings & RAG (Retrieval-Augmented Generation)
+
+#### Hugging Face Embeddings
+- **Model**: all-MiniLM-L6-v2
+- **Authentication**: HF_TOKEN environment variable
+- **Vector Dimension**: 384-dimensional vectors
+- **Purpose**: Resume-to-job semantic matching for accurate RAG
+- **Setup**: Add `HF_TOKEN` from https://huggingface.co/settings/tokens
+
+#### Vector Search (FAISS)
+- **Technology**: Facebook AI Similarity Search
+- **Purpose**: Fast semantic search across resume chunks
+- **Features**:
+  - Automatic caching to prevent re-embedding
+  - 500-character chunk size with 100-character overlap
+  - Top 5 most similar chunks retrieval
+  - Resume-to-job matching pipeline
+- **Integration**: Used in job matching analysis for accuracy
+
+#### RAG Workflow
+1. Resume uploaded → parsed into semantic chunks
+2. Chunks embedded using Hugging Face model + HF_TOKEN auth
+3. Vectors stored in FAISS index (cached for performance)
+4. Job description analyzed for semantic similarity
+5. Most relevant resume sections retrieved (Top 5)
+6. LLM analyzes matched content and generates score
+7. Provides strength/weakness breakdown based on actual resume content
 
 ---
 

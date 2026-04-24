@@ -796,7 +796,73 @@ Interview Coach AI is a comprehensive platform designed to help users prepare fo
 
 ---
 
+## Embeddings & RAG (Semantic Search)
+
+### 1. Hugging Face Embeddings
+- **Provider**: Hugging Face
+- **Model**: all-MiniLM-L6-v2
+- **Authentication**: HF_TOKEN environment variable
+- **Purpose**: Resume-to-job semantic matching
+- **Vector Dimension**: 384-dimensional vectors
+
+### 2. Vector Storage (FAISS)
+- **Technology**: Facebook AI Similarity Search
+- **Purpose**: Fast semantic search across resume chunks
+- **Caching**: Prevents re-embedding same resumes
+- **Chunk Size**: 500 characters per chunk
+- **Retrieval**: Top 5 most similar chunks
+
+### 3. RAG Workflow
+- **Step 1**: Resume uploaded → parsed into chunks
+- **Step 2**: Chunks embedded using HF model + HF_TOKEN
+- **Step 3**: Vectors stored in FAISS index
+- **Step 4**: Job description entered
+- **Step 5**: Similar resume sections retrieved
+- **Step 6**: LLM analyzes matches and generates score
+
+### 4. Configuration
+- Set `HF_TOKEN` in `.env` file
+- Token enables access to gated models
+- Higher rate limits for authenticated requests
+- Works with private embedding models
+
+---
+
 ## Support & Documentation
+
+### Help Resources
+- **API Documentation**: http://localhost:8000/docs (Swagger UI)
+- **Code Examples**: GitHub repository
+- **Email Support**: support@interviewcoach.ai
+- **FAQ**: In-app help section
+- **Video Tutorials**: Learning center
+
+### Getting Help
+1. Check documentation first
+2. Review API error codes
+3. Check troubleshooting guide
+4. Contact support team
+5. Submit bug reports
+
+---
+
+## Summary
+
+Interview Coach AI provides a complete interview preparation platform with:
+- ✅ User authentication & management
+- ✅ Resume upload & parsing
+- ✅ AI-powered interview questions
+- ✅ Audio transcription support
+- ✅ Smart job matching with RAG
+- ✅ AI coaching chat assistant
+- ✅ Performance analytics
+- ✅ Secure JWT authentication
+- ✅ MongoDB data persistence
+- ✅ Groq API integration
+- ✅ Hugging Face embeddings
+
+**Version**: 1.1.0  
+**Last Updated**: April 23, 2026
 
 ### In-App Resources
 - Help center

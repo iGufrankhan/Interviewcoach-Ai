@@ -60,11 +60,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
             )
         
         try:
-            # Verify token and get user_id
             user_id = verify_access_token(token)
-            
-            # Fetch user from database (user_id contains email)
-            user = User.objects(email=user_id).first()
+            user = await User.async_find_one(email=user_id)
             if not user:
                 logger.warning(f"User not found for token: {user_id}")
                 return JSONResponse(

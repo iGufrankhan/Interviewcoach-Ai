@@ -1,7 +1,8 @@
-from mongoengine import Document, StringField, DateTimeField
+from mongoengine import StringField, DateTimeField
 from datetime import datetime
+from utils.async_model import AsyncDocument
 
-class ChatSession(Document):
+class ChatSession(AsyncDocument):
     """Store chat sessions for each user"""
     meta = {'collection': 'chat_sessions'}
     
@@ -12,8 +13,7 @@ class ChatSession(Document):
     updated_at = DateTimeField(default=datetime.now)
     
 
-class ChatMessage(Document):
-    """Store individual messages in a chat session"""
+class ChatMessage(AsyncDocument):
     meta = {'collection': 'chat_messages'}
     
     session_id = StringField(required=True)  # Reference to ChatSession

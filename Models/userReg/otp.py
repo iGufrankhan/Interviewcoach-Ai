@@ -1,7 +1,8 @@
-from mongoengine import Document, StringField, DateTimeField
+from mongoengine import StringField, DateTimeField
 from datetime import datetime
+from utils.async_model import AsyncDocument
 
-class OTP(Document):
+class OTP(AsyncDocument):
     meta = {'collection': 'otp_storage'}
 
     email = StringField(required=True)

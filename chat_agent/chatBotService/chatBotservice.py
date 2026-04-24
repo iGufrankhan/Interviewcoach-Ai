@@ -28,7 +28,7 @@ class ChatBotService:
             model="llama-3.1-8b-instant"
         )
     
-    def get_user_resume(self) -> dict:
+    async def get_user_resume(self) -> dict:
         """Fetch user's resume data from MongoDB with caching (5 min TTL)"""
         # Check cache
         if self.resume_cache is not None and self.resume_cache_time is not None:
@@ -37,13 +37,13 @@ class ChatBotService:
                 return self.resume_cache
         
         try:
-            user = User.objects(email=self.user_email).first()
+            user = await User.async_find_one(email=self.user_email)
             if not user:
                 self.resume_cache = {}
                 self.resume_cache_time = datetime.now()
                 return {}
             
-            resume = Resume_data.objects(user=user).first()
+            resume = await Resume_data.async_find_one(user=user)
             if not resume:
                 self.resume_cache = {}
                 self.resume_cache_time = datetime.now()
@@ -66,10 +66,10 @@ class ChatBotService:
             print(f"Error fetching resume: {e}")
             return {}
         
-    def validate_session_ownership(self, session_id: str) -> bool:
+    async def validate_session_ownership(self, session_id: str) -> bool:
         """Verify user owns this session"""
         try:
-            session = ChatSession.objects(id=session_id).first()
+            session = await ChatSession.async_find_one(id=session_id)
             if not session:
                 return False
             return session.email == self.user_email
@@ -77,7 +77,7 @@ class ChatBotService:
             print(f"Error validating session: {e}")
             return False
     
-    def search_messages(self, keywords: List[str], session_id: Optional[str] = None, limit: int = 5) -> List[Dict]:
+    async def search_messages(self, keywords: List[str], session_id: Optional[str] = None, limit: int = 5) -> List[Dict]:
         """Search messages in MongoDB by keywords"""
         try:
             query = {}
@@ -86,11 +86,7 @@ class ChatBotService:
             else:
                 query["email"] = self.user_email
             
-            # Search for keywords in message content
-            if keywords:
-                messages = ChatMessage.objects(**query, content__icontains=keywords[0]).limit(limit).order_by('-timestamp')
-            else:
-                messages = ChatMessage.objects(**query).limit(limit).order_by('-timestamp')
+            messages = await ChatMessage.async_find(limit=limit, **query)
             
             return [
                 {
@@ -106,11 +102,10 @@ class ChatBotService:
             print(f"Error searching messages: {e}")
             return []
     
-    def get_relevant_context(self, session_id: str, message: str, limit: int = 3) -> str:
+    async def get_relevant_context(self, session_id: str, message: str, limit: int = 3) -> str:
         """Retrieve relevant conversation context from MongoDB based on recent messages"""
         try:
-            # Get recent messages from this session for context
-            messages = ChatMessage.objects(session_id=session_id).order_by('-timestamp').limit(limit * 2)
+            messages = await ChatMessage.async_find(session_id=session_id, limit=limit * 2)
             
             context_lines = []
             for msg in reversed(messages):
@@ -122,14 +117,14 @@ class ChatBotService:
             print(f"Error retrieving context: {e}")
             return ""
     
-    def get_session_stats(self, session_id: str) -> Dict:
+    async def get_session_stats(self, session_id: str) -> Dict:
         """Get conversation statistics for a session"""
         try:
-            messages = ChatMessage.objects(session_id=session_id)
+            messages = await ChatMessage.async_find(session_id=session_id)
             user_messages = [m for m in messages if m.role == 'user']
             ai_messages = [m for m in messages if m.role == 'assistant']
             
-            session = ChatSession.objects(id=session_id).first()
+            session = await ChatSession.async_find_one(id=session_id)
             
             return {
                 "total_messages": len(messages),
@@ -150,7 +145,7 @@ class ChatBotService:
         minutes = (duration.total_seconds() % 3600) / 60
         return f"{int(hours)}h {int(minutes)}m"
     
-    def create_session(self, title: str = "New Chat"):
+    async def create_session(self, title: str = "New Chat"):
         """Create a new chat session"""
         try:
             new_session = ChatSession(   
@@ -158,21 +153,21 @@ class ChatBotService:
                 email=self.user_email,
                 title=title
             )
-            new_session.save()
+            await new_session.async_save()
             print(f"[ChatBot] New session created: {new_session.id}")
             return str(new_session.id)
         except Exception as e:
             print(f"Error creating session: {e}")
             raise APIError(status_code=500, message="Failed to create session", error_code="SESSION_CREATE_ERROR")
    
-    def get_session_history(self, session: str) -> BaseChatMessageHistory:
+    async def get_session_history(self, session: str) -> BaseChatMessageHistory:
         """Get or create session history, loading from MongoDB if exists"""
         if session not in self.store:
             # Create new history object
             history = ChatMessageHistory()
             
             # Load existing messages from MongoDB
-            messages = ChatMessage.objects(session_id=session).order_by('timestamp')
+            messages = await ChatMessage.async_find(session_id=session, limit=1000)
             for msg in messages:
                 if msg.role == 'user':
                     history.add_user_message(msg.content)
@@ -184,9 +179,9 @@ class ChatBotService:
         
         return self.store[session]
     
-    def send_message(self, session_id: str, message: str):
+    async def send_message(self, session_id: str, message: str):
         # Validate session ownership
-        if not self.validate_session_ownership(session_id):
+        if not await self.validate_session_ownership(session_id):
             raise APIError(status_code=403, message="Unauthorized access to session", error_code="UNAUTHORIZED")
         
         # Save user message to MongoDB
@@ -195,7 +190,7 @@ class ChatBotService:
             role='user',
             content=message
         )
-        msg.save()
+        await msg.async_save()
         print(f"[ChatBot] User message saved to MongoDB for session {session_id}")
         
         # Get session history (append new message instead of clearing cache)
@@ -203,13 +198,13 @@ class ChatBotService:
         session_history.add_user_message(message)
         
         # Fetch user's resume data (uses cache with TTL)
-        resume = self.get_user_resume()
+        resume = await self.get_user_resume()
         
         # Format resume data for context
         resume_context = self._format_resume_context(resume)
         
         # Get relevant conversation context from MongoDB
-        conversation_context = self.get_relevant_context(session_id, message, limit=3)
+        conversation_context = await self.get_relevant_context(session_id, message, limit=3)
         context_prompt = f"\n\nRecent Conversation Context:\n{conversation_context}" if conversation_context else ""
         
         # Build prompt with resume context and conversation history
@@ -253,7 +248,7 @@ Ensure responses are consistent with previous conversation context."""
             role='assistant',
             content=response
         )
-        ai_msg.save()
+        await ai_msg.async_save()
         print(f"[ChatBot] AI response saved to MongoDB for session {session_id}")
         
         # Append AI message to cache
@@ -261,10 +256,10 @@ Ensure responses are consistent with previous conversation context."""
         
         # Update session's updated_at timestamp
         try:
-            session = ChatSession.objects(id=session_id).first()
+            session = await ChatSession.async_find_one(id=session_id)
             if session:
                 session.updated_at = datetime.now()
-                session.save()
+                await session.async_save()
                 print(f"[ChatBot] Session {session_id} timestamp updated")
         except Exception as e:
             print(f"Error updating session timestamp: {e}")
@@ -302,10 +297,15 @@ Ensure responses are consistent with previous conversation context."""
         
         return "\n".join(lines) if lines else "No resume details available."
     
-    def get_all_sessions(self) -> list:
-        """Get all chat sessions for user with message count"""
+    async def get_all_sessions(self, skip: int = 0, limit: int = 10) -> list:
+        """Get paginated chat sessions for user"""
         try:
-            sessions = ChatSession.objects(email=self.user_email).order_by('-updated_at')
+            sessions = await ChatSession.async_find(skip=skip, limit=limit, email=self.user_email)
+            message_counts = {}
+            for s in sessions:
+                msgs = await ChatMessage.async_find(session_id=str(s.id))
+                message_counts[str(s.id)] = len(msgs)
+            
             return [
                 {
                     "_id": str(s.id),
@@ -313,21 +313,27 @@ Ensure responses are consistent with previous conversation context."""
                     "email": s.email,
                     "created_at": s.created_at.isoformat(),
                     "updated_at": s.updated_at.isoformat(),
-                    "message_count": len(ChatMessage.objects(session_id=str(s.id)))
+                    "message_count": message_counts.get(str(s.id), 0)
                 }
                 for s in sessions
             ]
         except Exception as e:
-            print(f"Error getting sessions: {e}")
             return []
     
-    def get_session_messages(self, session_id: str, limit: int = 50, skip: int = 0) -> List[Dict]:
+    async def get_sessions_count(self) -> int:
+        """Get total count of sessions for user"""
+        try:
+            return await ChatSession.async_count(email=self.user_email)
+        except Exception as e:
+            return 0
+    
+    async def get_session_messages(self, session_id: str, limit: int = 50, skip: int = 0) -> List[Dict]:
         """Retrieve paginated messages from a session"""
-        if not self.validate_session_ownership(session_id):
+        if not await self.validate_session_ownership(session_id):
             raise APIError(status_code=403, message="Unauthorized access to session", error_code="UNAUTHORIZED")
         
         try:
-            messages = ChatMessage.objects(session_id=session_id).order_by('timestamp').skip(skip).limit(limit)
+            messages = await ChatMessage.async_find(session_id=session_id, skip=skip, limit=limit)
             return [
                 {
                     "id": str(msg.id),
@@ -341,17 +347,14 @@ Ensure responses are consistent with previous conversation context."""
             print(f"Error retrieving messages: {e}")
             return []
     
-    def delete_session(self, session_id: str) -> bool:
+    async def delete_session(self, session_id: str) -> bool:
         """Delete a session and all its messages"""
-        if not self.validate_session_ownership(session_id):
+        if not await self.validate_session_ownership(session_id):
             raise APIError(status_code=403, message="Unauthorized access to session", error_code="UNAUTHORIZED")
         
         try:
-            # Delete all messages in session
-            ChatMessage.objects(session_id=session_id).delete()
-            
-            # Delete session
-            ChatSession.objects(id=session_id).delete()
+            await ChatMessage.async_delete(session_id=session_id)
+            await ChatSession.async_delete(id=session_id)
             
             # Clear from cache
             if session_id in self.store:

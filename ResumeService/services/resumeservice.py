@@ -12,11 +12,11 @@ logger = logging.getLogger(__name__)
 
 class ResumeService:
 
-    def __init__(self, upload_dir: str, groq_api_key: str, user_id: str):
+    async def __init__(self, upload_dir: str, groq_api_key: str, user_id: str):
         logger.info(f"🔧 ResumeService init - user_id (email): {user_id}")
         
         # user_id is now the email (from JWT token)
-        user_obj = User.objects(email=user_id).first()
+        user_obj = await User.async_find_one(email=user_id)
         if not user_obj:
             logger.error(f"❌ User not found: {user_id}")
             raise APIError(status_code=404, message=f"User with email {user_id} not found", error_code="USER_NOT_FOUND")

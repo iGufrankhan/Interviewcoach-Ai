@@ -5,16 +5,15 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from contextlib import asynccontextmanager
 from middlewares.auth_middleware import AuthMiddleware
 from middlewares.rate_limit import RateLimitMiddleware
 from utils.apierror import APIError
-from utils.error_codes import ErrorCode, HttpStatusCode
+from utils.error_codes import ErrorCode
 from utils.constant import CORS_ORIGINS
-import logging
+from datetime import datetime
+import logging, os, sys
 import Dbconfig.config
-
-# Setup logging
-logger = logging.getLogger(__name__)
 
 from ResumeService.api.uploadresume import router as resume_router
 from ResumeService.api.getresumedata import router as update_router
@@ -28,148 +27,50 @@ from JobMaching.api.analyse import router as analyse_router
 from interviewService.api.question_gen import router as question_gen_router
 from chat_agent.api.chatBot import router as chat_router  
 from interviewService.api.interview_flow import router as interview_flow_router
-from routes.utility import router as utility_router
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await Dbconfig.config.init_db()
+    yield
 
 app = FastAPI(
     title="Interview Coach AI",
-    description="AI-powered interview preparation platform",
-    version="1.0.0"
+    description="AI-powered interview preparation platform with AI coaching",
+    version="1.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    lifespan=lifespan
 )
 
-# CORS configuration
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["Content-Type", "Authorization"],
-    max_age=3600,
-)
-
-# Add rate limiting middleware
+app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_credentials=True, allow_methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["Content-Type", "Authorization"], max_age=3600)
 app.add_middleware(RateLimitMiddleware)
-
-# Add JWT authentication middleware
 app.add_middleware(AuthMiddleware)
 
-
-# ========== Startup Event ==========
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database connection on application startup."""
-    await Dbconfig.config.init_db()
-
-
-# ========== Global Exception Handlers ==========
-
-@app.exception_handler(APIError)
-async def api_error_handler(request: Request, exc: APIError):
-    """
-    Handle APIError exceptions.
-    
-    - Returns standardized error response
-    - Logs internal message if provided
-    - Never exposes internal details to client
-    """
-    # Log internal error details for debugging
-    if exc.internal_message:
-        logger.error(
-            f"API Error: {exc.error_code}",
-            extra={
-                "error_code": exc.error_code,
-                "internal_message": exc.internal_message,
-                "status_code": exc.status_code,
-                "path": request.url.path
-            }
-        )
-    
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=exc.detail  # Already formatted by APIError.__init__
-    )
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_error_handler(request: Request, exc: RequestValidationError):
-    """
-    Handle Pydantic validation errors.
-    
-    - Extract field names that failed validation
-    - Return user-friendly error message
-    - Log details for debugging
-    """
-    errors = exc.errors()
-    field_names = [error["loc"][1] if len(error["loc"]) > 1 else "unknown" for error in errors]
-    
-    logger.warning(
-        f"Validation error on {request.url.path}",
-        extra={
-            "fields": field_names,
-            "errors": errors
+@app.get("/health")
+async def health():
+    try:
+        db_status = Dbconfig.config.get_db_status()
+        is_connected = db_status.get("is_connected", False)
+        
+        return {
+            "api_status": "operational",
+            "message": "Interview Coach AI API is running successfully",
+            "version": app.version,
+            "service": app.title,
+            "database": {
+                "status": "connected" if is_connected else "disconnected",
+                "name": db_status.get("db_name"),
+                "retry_count": db_status.get("retry_count")
+            },
+            "overall_status": "healthy" if is_connected else "degraded",
+            "timestamp": datetime.utcnow().isoformat() + "Z"
         }
-    )
-    
-    return JSONResponse(
-        status_code=HttpStatusCode.BAD_REQUEST,
-        content={
-            "success": False,
-            "message": f"Validation error in fields: {', '.join(set(field_names))}",
-            "error_code": ErrorCode.INVALID_INPUT,
-            "data": None
-        }
-    )
+    except Exception as e:
+        return JSONResponse(status_code=503, content={"overall_status": "degraded", "error": str(e)})
 
 
-@app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    """
-    Handle unexpected exceptions.
-    
-    - Never expose internal error details
-    - Log full traceback for debugging
-    - Return generic error message
-    """
-    logger.error(
-        f"Unexpected error on {request.url.path}",
-        exc_info=True,
-        extra={"path": request.url.path}
-    )
-    
-    return JSONResponse(
-        status_code=HttpStatusCode.INTERNAL_SERVER_ERROR,
-        content={
-            "success": False,
-            "message": "An unexpected error occurred. Please try again later.",
-            "error_code": ErrorCode.INTERNAL_SERVER_ERROR,
-            "data": None
-        }
-    )
 
-
-# ========== Health Check Endpoint ==========
-
-@app.get("/health", tags=["Monitoring"])
-async def health_check():
-    """Health check endpoint for monitoring."""
-    db_status = Dbconfig.config.get_db_status()
-    db_connected = Dbconfig.config.is_database_connected()
-    
-    overall_status = "healthy" if db_connected else "degraded"
-    status_code = 200 if db_connected else 503
-    
-    return JSONResponse(
-        status_code=status_code,
-        content={
-            "status": overall_status,
-            "database": db_status,
-            "timestamp": __import__("datetime").datetime.utcnow().isoformat()
-        }
-    )
-
-
-# Register routers
-app.include_router(utility_router)
 app.include_router(register_router)
 app.include_router(login_router)
 app.include_router(refresh_token_router)

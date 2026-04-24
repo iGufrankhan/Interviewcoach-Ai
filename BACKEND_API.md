@@ -215,6 +215,232 @@ Authorization: Bearer <jwt_token>
 
 ## Interview APIs
 
+### 1. Generate Interview Questions
+**Endpoint:** `POST /question_gen/generate`
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Request Body:**
+```json
+{
+  "resume_id": "resume_object_id",
+  "description": "Senior Backend Developer job description..."
+}
+```
+
+**Response (200):**
+```json
+{
+  "questions": [
+    "Question 1?",
+    "Question 2?",
+    "...",
+    "Question 10?"
+  ]
+}
+```
+
+---
+
+## Chat APIs
+
+### 1. Create Chat Session
+**Endpoint:** `POST /api/chat/create-session`
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Response (201):**
+```json
+{
+  "status": "success",
+  "data": {
+    "session_id": "session_object_id"
+  }
+}
+```
+
+### 2. Send Message
+**Endpoint:** `POST /api/chat/send-message`
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Request Body:**
+```json
+{
+  "session_id": "session_object_id",
+  "message": "What skills should I focus on?"
+}
+```
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "data": {
+    "response": "Based on current market trends..."
+  }
+}
+```
+
+### 3. Get Chat Sessions
+**Endpoint:** `GET /api/chat/sessions`
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "session_id": "...",
+      "created_at": "2026-03-27T...",
+      "message_count": 5
+    }
+  ]
+}
+```
+
+---
+
+## Job Matching APIs
+
+### 1. Analyze Resume Match
+**Endpoint:** `POST /api/analyseresume`
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Request Body:**
+```json
+{
+  "resume_id": "resume_object_id",
+  "description": "Job description text..."
+}
+```
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "data": {
+    "score": 75,
+    "eligible": "PARTIAL",
+    "strengths": "• Python experience\n• Database management",
+    "weaknesses": "• Limited cloud experience",
+    "suggestions": "• Learn AWS certification"
+  }
+}
+```
+
+---
+
+## Error Handling
+
+### Common Error Responses
+
+**400 Bad Request:**
+```json
+{
+  "detail": {
+    "error": "Invalid input provided",
+    "error_code": "INVALID_INPUT"
+  }
+}
+```
+
+**401 Unauthorized:**
+```json
+{
+  "detail": {
+    "error": "Authentication required",
+    "error_code": "UNAUTHORIZED"
+  }
+}
+```
+
+**404 Not Found:**
+```json
+{
+  "detail": {
+    "error": "Resource not found",
+    "error_code": "NOT_FOUND"
+  }
+}
+```
+
+**500 Internal Server Error:**
+```json
+{
+  "detail": {
+    "error": "Internal server error",
+    "error_code": "INTERNAL_ERROR"
+  }
+}
+```
+
+---
+
+## Response Format
+
+All API responses follow standard format:
+
+**Success:**
+```json
+{
+  "status": "success",
+  "message": "Operation successful",
+  "data": { /* endpoint-specific data */ }
+}
+```
+
+**Error:**
+```json
+{
+  "detail": {
+    "error": "Error description",
+    "error_code": "ERROR_CODE"
+  }
+}
+```
+
+---
+
+**Base URL**: `http://localhost:8000`
+**Version**: 1.1.0
+**Last Updated**: April 23, 2026
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "message": "Resume deleted successfully"
+}
+```
+
+---
+
+## Interview APIs
+
 ### 1. Start Interview
 **Endpoint:** `POST /api/interview/start`
 

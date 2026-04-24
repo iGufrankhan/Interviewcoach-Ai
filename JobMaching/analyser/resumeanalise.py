@@ -32,7 +32,7 @@ class JobMatchingService:
         self.description = description
         self.use_rag = use_rag
     
-    def analyze(self):
+    async def analyze(self):
         """
         Perform resume-job matching analysis
         
@@ -41,7 +41,7 @@ class JobMatchingService:
         """
         try:
             compare_service = CompareService(self.api_key, self.resume_id, self.description)
-            self.resume_data, self.job_description = compare_service.get_data()
+            self.resume_data, self.job_description = await compare_service.get_data()
             
             if self.resume_data is None:
                 raise APIError(status_code=400, message="Failed to load resume data", error_code="RESUME_LOADING_FAILED")

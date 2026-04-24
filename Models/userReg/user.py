@@ -1,8 +1,9 @@
-from mongoengine import Document, StringField, DateTimeField, EmailField, BooleanField
+from mongoengine import StringField, DateTimeField, EmailField, BooleanField
 from datetime import datetime
+from utils.async_model import AsyncDocument
 
 
-class User(Document):
+class User(AsyncDocument):
     meta = {"collection": "users"}
 
     email = EmailField(required=True, unique=True)

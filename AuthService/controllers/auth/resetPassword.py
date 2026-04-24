@@ -17,7 +17,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 async def request_password_reset(email: str):
     """Initiate password reset by sending OTP to email."""
     email_lower = email.lower().strip()
-    user = User.objects(email__iexact=email_lower).first()
+    user = await User.async_find_one(email=email_lower)
 
     if not user:
         raise APIError(
@@ -45,10 +45,10 @@ async def request_password_reset(email: str):
 async def verify_password_reset_otp(email: str, otp: str):
     """Verify OTP for password reset and return a short-lived token."""
     email_lower = email.lower().strip()
-    otp_entry = OTP.objects(
-        email__iexact=email_lower,
+    otp_entry = await OTP.async_find_one(
+        email=email_lower,
         purpose="password_reset"
-    ).order_by("-created_at").first()
+    )
 
     if not otp_entry:
         raise APIError(
@@ -58,7 +58,7 @@ async def verify_password_reset_otp(email: str, otp: str):
         )
 
     if otp_entry.expires_at < datetime.now(timezone.utc).replace(tzinfo=None):
-        otp_entry.delete()
+        await OTP.async_delete(id=otp_entry.id)
         raise APIError(
             status_code=400,
             message="Invalid or expired OTP",
@@ -73,7 +73,7 @@ async def verify_password_reset_otp(email: str, otp: str):
         )
     
     # Get user to fetch user_id
-    user = User.objects(email__iexact=email_lower).first()
+    user = await User.async_find_one(email=email_lower)
     if not user:
         raise APIError(
             status_code=404,
@@ -86,7 +86,7 @@ async def verify_password_reset_otp(email: str, otp: str):
     )
 
     # Optionally, you can delete the OTP after successful verification
-    otp_entry.delete()
+    await OTP.async_delete(id=otp_entry.id)
 
     return success_response(
         message="OTP verified successfully",
@@ -98,7 +98,7 @@ async def verify_password_reset_otp(email: str, otp: str):
 async def resend_password_reset_otp(email: str):
     """Resend OTP for password reset."""
     email_lower = email.lower().strip()
-    user = User.objects(email__iexact=email_lower).first()
+    user = await User.async_find_one(email=email_lower)
 
     if not user:
         raise APIError(
@@ -122,7 +122,7 @@ async def resend_password_reset_otp(email: str):
 async def reset_password(email: str, new_password: str):
     """Reset password using the provided reset token."""
     email_lower = email.lower().strip()
-    user = User.objects(email__iexact=email_lower).first()
+    user = await User.async_find_one(email=email_lower)
     
     if not user:
         raise APIError(
@@ -132,7 +132,7 @@ async def reset_password(email: str, new_password: str):
         )
     
     user.password_hash = pwd_context.hash(new_password[:72])
-    user.save()
+    await user.async_save()
     
     return success_response(
         message="Password has been reset successfully",

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Query
 from interviewService.loader.get_data import InterviewDataLoader
 from interviewService.QuestionGenService.Questiongen import QuestionGen
 from interviewService.anwerService.AnwerListen import AnwerListen
@@ -30,7 +30,7 @@ async def start_interview(req: StartInterviewRequest, request: Request):
             raise APIError(status_code=400, message="API key is required", error_code="MISSING_API_KEY")
         
         # Validate resume exists
-        resume = Resume_data.objects(id=req.resume_id).first()
+        resume = await Resume_data.async_find_one(id=req.resume_id)
         if not resume:
             raise APIError(status_code=404, message=f"Resume with ID {req.resume_id} not found", error_code="RESUME_NOT_FOUND")
         
@@ -42,7 +42,7 @@ async def start_interview(req: StartInterviewRequest, request: Request):
         questions = question_gen.generate_questions(context)
         
         # Create interview session
-        user_obj = User.objects(email=user.email).first()
+        user_obj = await User.async_find_one(email=user.email)
         interview = InterviewSession(
             user=user_obj,
             job_title=req.job_title,
@@ -50,7 +50,7 @@ async def start_interview(req: StartInterviewRequest, request: Request):
             resume_id=req.resume_id,
             questions=questions
         )
-        interview.save()
+        await interview.async_save()
         
         return success_response(
             message="Interview started",
@@ -78,11 +78,11 @@ async def submit_answer(req: SubmitAnswerRequest, request: Request):
     user = request.state.user
     try:
         # Validate session exists and belongs to user
-        interview = InterviewSession.objects(id=req.session_id).first()
+        interview = await db_find_one(InterviewSession, id=req.session_id)
         if not interview:
             raise APIError(status_code=404, message="Interview session not found", error_code="SESSION_NOT_FOUND")
         
-        user_obj = User.objects(email=user.email).first()
+        user_obj = await db_find_one(User, email=user.email)
         if interview.user != user_obj:
             raise APIError(status_code=403, message="Unauthorized", error_code="UNAUTHORIZED")
         
@@ -108,7 +108,7 @@ async def submit_answer(req: SubmitAnswerRequest, request: Request):
             raise APIError(status_code=400, message="All answers already submitted", error_code="ALL_ANSWERED")
         
         interview.answers.append(answer_text)
-        interview.save()
+        await interview.async_save()
         
         return success_response(
             message=f"Answer {current_answers_count + 1} saved",
@@ -135,12 +135,11 @@ async def submit_interview(req: SubmitInterviewRequest, request: Request):
     """Submit interview and analyze all answers, return score out of 10"""
     user = request.state.user
     try:
-        # Validate session
-        interview = InterviewSession.objects(id=req.session_id).first()
+        interview = await InterviewSession.async_find_one(id=req.session_id)
         if not interview:
             raise APIError(status_code=404, message="Interview session not found", error_code="SESSION_NOT_FOUND")
         
-        user_obj = User.objects(email=user.email).first()
+        user_obj = await User.async_find_one(email=user.email)
         if interview.user != user_obj:
             raise APIError(status_code=403, message="Unauthorized", error_code="UNAUTHORIZED")
         
@@ -194,11 +193,11 @@ async def get_interview_session(session_id: str, request: Request):
     """Get interview session details"""
     user = request.state.user
     try:
-        interview = InterviewSession.objects(id=session_id).first()
+        interview = await InterviewSession.async_find_one(id=session_id)
         if not interview:
             raise APIError(status_code=404, message="Interview session not found", error_code="SESSION_NOT_FOUND")
         
-        user_obj = User.objects(email=user.email).first()
+        user_obj = await User.async_find_one(email=user.email)
         if interview.user != user_obj:
             raise APIError(status_code=403, message="Unauthorized", error_code="UNAUTHORIZED")
         
@@ -229,23 +228,40 @@ async def get_interview_session(session_id: str, request: Request):
 
 
 @router.get("/sessions")
-async def get_user_interviews(request: Request):
-    """Get all interview sessions for user"""
+async def get_user_interviews(
+    request: Request,
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=100, description="Items per page (1-100)")
+):
+    """Get paginated interview sessions for user"""
     user = request.state.user
     try:
-        user_obj = User.objects(email=user.email).first()
-        interviews = InterviewSession.objects(user=user_obj).order_by('-created_at')
+        user_obj = await User.async_find_one(email=user.email)
+        
+        total = await InterviewSession.async_count(user=user_obj)
+        skip = (page - 1) * limit
+        interviews = await InterviewSession.async_find(skip=skip, limit=limit, user=user_obj)
+        
+        interviews_list = [{
+            "session_id": str(i.id),
+            "job_title": i.job_title,
+            "status": i.status,
+            "total_score": i.total_score,
+            "created_at": i.created_at.isoformat(),
+            "completed_at": i.completed_at.isoformat() if i.completed_at else None
+        } for i in interviews]
         
         return success_response(
             message="Interviews retrieved",
-            data=[{
-                "session_id": str(i.id),
-                "job_title": i.job_title,
-                "status": i.status,
-                "total_score": i.total_score,
-                "created_at": i.created_at.isoformat(),
-                "completed_at": i.completed_at.isoformat() if i.completed_at else None
-            } for i in interviews],
+            data={
+                "interviews": interviews_list,
+                "pagination": {
+                    "page": page,
+                    "limit": limit,
+                    "total": total,
+                    "total_pages": (total + limit - 1) // limit
+                }
+            },
             status_code=200
         )
     
