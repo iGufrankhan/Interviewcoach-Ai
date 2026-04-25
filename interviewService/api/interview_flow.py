@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Request, Query
 from interviewService.loader.get_data import InterviewDataLoader
 from interviewService.QuestionGenService.Questiongen import QuestionGen
-from interviewService.anwerService.AnwerListen import AnwerListen
 from interviewService.Analyser.analysisanwer import AnalysisAnswer
 from Models.resumeservice.resume_models import Resume_data
 from Models.interviewservice.interview_models import InterviewSession
@@ -89,18 +88,11 @@ async def submit_answer(req: SubmitAnswerRequest, request: Request):
         # Handle audio input
         answer_text = request.answer
         if req.use_audio:
-            try:
-                audio_listener = AnwerListen()
-                answer_text = audio_listener.listen()
-                if not answer_text:
-                    raise APIError(status_code=400, message="No audio captured", error_code="NO_AUDIO")
-            except APIError as e:
-                error_detail = e.detail.get("error") if isinstance(e.detail, dict) else str(e.detail)
-                return error_response(
-                    message=f"Audio failed: {error_detail}. Please type your answer.",
-                    error_code="AUDIO_FAILED",
-                    status_code=400
-                )
+            return error_response(
+                message="Audio answers are currently disabled. Please type your answer.",
+                error_code="AUDIO_DISABLED",
+                status_code=400
+            )
         
         # Add answer to interview session
         current_answers_count = len(interview.answers)
@@ -273,52 +265,58 @@ async def get_user_interviews(
         )
 
 
-@router.post("/transcribe-audio")
-async def transcribe_audio(req: dict, request: Request):
-    """Transcribe audio blob to text
-    
-    Expected request body:
-    {
-        "audio_data": "base64_encoded_audio_string"
-    }
-    """
-    user = request.state.user
-    try:
-        audio_data = req.get("audio_data")
-        if not audio_data:
-            raise APIError(
-                status_code=400,
-                message="audio_data is required",
-                error_code="MISSING_AUDIO_DATA"
-            )
-        
-        api_key = GROQ_API_KEY
-        if not api_key:
-            raise APIError(
-                status_code=400,
-                message="API key is required",
-                error_code="MISSING_API_KEY"
-            )
-        
-        # Import here to avoid circular imports
-        from interviewService.anwerService.audio_transcriber import AudioTranscriber
-        
-        transcriber = AudioTranscriber(api_key=api_key)
-        transcribed_text = transcriber.transcribe_audio(audio_data)
-        
-        return success_response(
-            message="Audio transcribed successfully",
-            data={
-                "transcribed_text": transcribed_text
-            },
-            status_code=200
-        )
-    
-    except APIError:
-        raise
-    except Exception as e:
-        return error_response(
-            message=f"Audio transcription failed: {str(e)}",
-            error_code="TRANSCRIPTION_ERROR",
-            status_code=500
-        )
+# @router.post("/transcribe-audio")
+# async def transcribe_audio(req: dict, request: Request):
+#     """Transcribe audio blob to text
+#     
+#     Expected request body:
+#     {
+#         "audio_data": "base64_encoded_audio_string"
+#     }
+#     """
+#     user = request.state.user
+#     try:
+#         audio_data = req.get("audio_data")
+#         if not audio_data:
+#             raise APIError(
+#                 status_code=400,
+#                 message="audio_data is required",
+#                 error_code="MISSING_AUDIO_DATA"
+#             )
+#         
+#         api_key = GROQ_API_KEY
+#         if not api_key:
+#             raise APIError(
+#                 status_code=400,
+#                 message="API key is required",
+#                 error_code="MISSING_API_KEY"
+#             )
+#         
+#         # Import here to avoid circular imports
+#         # from interviewService.anwerService.audio_transcriber import AudioTranscriber
+#         # 
+#         # transcriber = AudioTranscriber(api_key=api_key)
+#         # transcribed_text = transcriber.transcribe_audio(audio_data)
+#         # 
+#         # return success_response(
+#         #     message="Audio transcribed successfully",
+#         #     data={
+#         #         "transcribed_text": transcribed_text
+#         #     },
+#         #     status_code=200
+#         # )
+#         
+#         return error_response(
+#             message="Audio answers are currently disabled.",
+#             error_code="AUDIO_DISABLED",
+#             status_code=400
+#         )
+#     
+#     except APIError:
+#         raise
+#     except Exception as e:
+#         return error_response(
+#             message=f"Audio transcription failed: {str(e)}",
+#             error_code="TRANSCRIPTION_ERROR",
+#             status_code=500
+#         )
