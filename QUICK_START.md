@@ -1,273 +1,109 @@
-# Quick Start Guide - Interview Coach AI
+<h1 align="center">⚡ Quick Start Guide</h1>
 
-## Prerequisites
+<div align="center">
+  <p>Get Interview Coach AI up and running on your local machine in minutes.</p>
+</div>
 
-- Node.js 18+ and npm
-- Python 3.8+
-- MongoDB 5.0+ (running locally or cloud connection)
-- Groq API key (free tier available)
-- Git (for cloning)
+---
 
-## Step-by-Step Setup
+## 📋 Prerequisites
 
-### 0. Database Setup (MongoDB)
+* **Node.js 18+** and **npm**
+* **Python 3.8+**
+* **MongoDB 5.0+** (Local installation or MongoDB Atlas Cloud)
+* **Groq API Key** (Free tier available)
+* **Hugging Face Token** (Free tier available)
+
+---
+
+## 🛠️ Step-by-Step Setup
+
+### Step 1: Database Setup (MongoDB)
 
 **Option A: Local MongoDB**
 ```bash
-# Windows (if installed)
+# Windows
 mongod
-
 # macOS
-brew install mongodb-community
 brew services start mongodb-community
-
 # Linux
 sudo systemctl start mongod
 ```
 
-**Option B: MongoDB Cloud (Atlas)**
-1. Go to https://www.mongodb.com/cloud/atlas
-2. Create free account
-3. Create a cluster (M0 free tier)
-4. Get connection string: `mongodb+srv://user:password@cluster.mongodb.net/interviewcoach`
-5. Use this in `.env` as `DATABASE_URL`
+**Option B: MongoDB Atlas (Cloud)**
+1. Create a free M0 cluster at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
+2. Get your connection string: `mongodb+srv://user:password@cluster.mongodb.net/interviewcoach`.
 
-### 1. Backend Setup & Run
+### Step 2: Backend Setup
 
+Open a terminal in the project root:
 ```bash
-# Navigate to project root
-cd "c:\Users\kakab\OneDrive\Desktop\InterviewCoach AI"
-
-# Activate Python virtual environment
+# 1. Activate Python virtual environment
+# Windows:
 .\project_2\Scripts\Activate.ps1
+# Mac/Linux:
+source project_2/bin/activate
 
-# Install dependencies
+# 2. Install dependencies
 pip install -r requirements.txt
 
-# Set environment variables (create .env file in root)
-# Option 1: Manual creation
-echo DATABASE_URL=mongodb://localhost:27017/interviewcoach > .env
-echo DATABASE_NAME=interviewcoach >> .env
-echo GROQ_API_KEY=your_api_key_here >> .env
-echo HF_TOKEN=your_huggingface_token_here >> .env
-echo JWT_SECRET=your_jwt_secret_key >> .env
-echo SMTP_EMAIL=your_email@gmail.com >> .env
-echo SMTP_PASSWORD=your_app_password >> .env
-
-# Option 2: Copy from template (recommended)
+# 3. Create .env file from template
 cp .env.example .env
-# Then edit .env with your actual values
+```
+Edit the `.env` file with your credentials:
+```env
+DATABASE_URL=mongodb://localhost:27017/interviewcoach
+GROQ_API_KEY=your_api_key_here
+HF_TOKEN=your_huggingface_token_here
+JWT_SECRET=your_jwt_secret_key
+SMTP_EMAIL=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
+```
 
-# Start FastAPI backend
+Start the FastAPI server:
+```bash
 uvicorn app:app --reload --port 8000
 ```
+*Backend is now running on `http://localhost:8000`*
 
-Backend running on: `http://localhost:8000`
+### Step 3: Frontend Setup
 
-### 2. Frontend Setup & Run
-
+Open a **new** terminal and navigate to the `Frontend` folder:
 ```bash
-# Open new terminal/PowerShell
+cd Frontend
 
-# Navigate to Frontend folder
-cd "c:\Users\kakab\OneDrive\Desktop\InterviewCoach AI\Frontend"
-
-# Install dependencies
+# 1. Install dependencies
 npm install
 
-# Ensure .env.local exists with:
-NEXT_PUBLIC_API_URL=http://localhost:8000
+# 2. Create local environment file
+echo NEXT_PUBLIC_API_URL=http://localhost:8000 > .env.local
 
-# Start Next.js dev server
+# 3. Start Next.js server
 npm run dev
 ```
+*Frontend is now running on `http://localhost:3000`*
 
-Frontend running on: `http://localhost:3000`
+---
 
-### 3. Access the Application
+## 🎮 Access the Application
 
-1. Open browser: `http://localhost:3000`
-2. On homepage, click "Login" or "Get Started"
-3. Create account or login with existing credentials
-4. Upload a resume
-5. Go to Interview Service
-6. Select resume + job description
-7. Generate questions and practice!
+1. Open your browser and go to [http://localhost:3000](http://localhost:3000).
+2. Click **Login** or **Get Started** to create a free account.
+3. Upload your Resume (PDF or DOCX).
+4. Head to the **Interview Service**, paste a job description, and start practicing!
 
-## Troubleshooting
+---
 
-### Backend won't start
-```bash
-# Check if port 8000 is in use
-netstat -ano | findstr :8000
+## 🛑 Troubleshooting
 
-# Kill process if needed (replace PID)
-taskkill /PID <PID> /F
+* **Backend won't start (Port 8000 in use):**
+  * Change the port: `uvicorn app:app --reload --port 8001`
+  * Don't forget to update `NEXT_PUBLIC_API_URL` in the frontend if you change the port!
+* **Resume upload fails:** Ensure your `GROQ_API_KEY` is set correctly in `.env` and the file is under 5MB.
+* **CORS Errors:** Verify the frontend URL exactly matches the allowed origins in `app.py`.
 
-# Try different port
-uvicorn app:app --reload --port 8001
-```
+---
 
-### Frontend shows API errors
-- Check if backend is running on port 8000
-- Verify CORS is enabled in app.py
-- Check token in localStorage (DevTools > Application)
-- Network tab in DevTools shows actual error
-
-### Resume upload fails
-- Check file format (PDF, DOCX, TXT only)
-- Ensure GROQ_API_KEY is set
-- Check file size (usually max 10MB)
-
-### Questions not generating
-- Verify GROQ_API_KEY is valid
-- Ensure resume data extracted correctly
-- Check backend logs for detailed error
-
-## API Health Check
-
-### Check Backend Status
-```bash
-curl http://localhost:8000/docs
-```
-Should show Swagger UI with all endpoints
-
-### Test API Call
-```bash
-curl -X GET \
-  "http://localhost:8000/resume/api/user-resumes/test-user" \
-  -H "Authorization: Bearer {your_token}"
-```
-
-## Development Tips
-
-### Hot Reload
-- **Backend**: Automatically reloads on file changes
-- **Frontend**: Automatically reloads on file changes
-- No need to restart during development
-
-### Debug Mode
-```javascript
-// Frontend .env.local
-NEXT_PUBLIC_DEBUG=true
-```
-Then check DevTools console for extra logging
-
-### Database
-- View MongoDB: Install MongoDB Compass
-- Connect to your MONGODB_URL
-- Explore collections in compass
-
-### API Testing
-Use Postman or Thunder Client to test endpoints independently
-
-## File Structure Summary
-
-```
-InterviewCoach AI/
-├── app.py                           # FastAPI entry point
-├── requirements.txt                 # Python dependencies
-├── .env                             # Backend config (create this)
-│
-├── AuthService/                     # Authentication
-├── ResumeService/                   # Resume upload/management
-├── interviewService/                # Interview Q&A generation
-├── JobMatching/                     # Job matching analysis
-├── Models/                          # Database models
-├── middlewares/                     # Auth middleware
-├── utils/                           # Shared utilities
-│
-├── Frontend/
-│   ├── app/                         # Next.js routes
-│   │   ├── (InterviewService)/      # Interview pages
-│   │   ├── (resumeService)/         # Resume management
-│   │   ├── (auth)/                  # Login/Register
-│   │   ├── (jobmatching)/           # Job analysis
-│   │   └── api/                     # API routes
-│   ├── lib/
-│   │   └── api.ts                   # API utilities
-│   ├── .env.local                   # Frontend config (create this)
-│   ├── package.json
-│   └── tsconfig.json
-│
-└── BACKEND_FRONTEND_INTEGRATION.md  # Full integration guide
-```
-
-## Next Steps
-
-1. ✅ Backend running
-2. ✅ Frontend running
-3. ✅ Create user account
-4. ✅ Upload resume
-5. ✅ Generate interview questions
-6. 🔄 Customize and extend features
-7. 🚀 Deploy to production
-
-## Production Deployment
-
-### Update Configuration
-```
-# .env (Backend)
-GROQ_API_KEY=production_key
-MONGODB_URL=production_mongodb_url
-
-# Frontend/.env.production.local
-NEXT_PUBLIC_API_URL=https://api.yourdomain.com
-```
-
-### Deploy Backend
-```bash
-# Build Docker image or use hosting service
-# Popular options: AWS, Google Cloud, Azure, Heroku, Railway
-
-gunicorn app:app -w 4 -b 0.0.0.0:8000
-```
-
-### Deploy Frontend
-```bash
-# Build for production
-npm run build
-
-# Deploy to: Vercel, Netlify, AWS S3 + CloudFront, Docker, etc.
-npm run start
-```
-
-## Support & Documentation
-
-- **Full Integration Guide**: See `BACKEND_FRONTEND_INTEGRATION.md`
-- **Interview Service**: See `Frontend/app/(InterviewService)/README.md`
-- **Swagger UI**: Visit `http://localhost:8000/docs`
-
-## Useful Commands
-
-```bash
-# Backend
-uvicorn app:app --reload              # Run backend with hot reload
-uvicorn app:app --port 8001           # Run on different port
-
-# Frontend
-npm run dev                            # Development mode
-npm run build                          # Production build
-npm run start                          # Start production server
-npm run lint                           # Run linter
-
-# Database
-# MongoDB - connect with Compass or CLI
-mongosh  # if installed
-```
-
-## Common Environment Variables
-
-```bash
-# Backend
-GROQ_API_KEY=xxxxxxxxxxxxx
-MONGODB_URL=mongodb+srv://user:pass@cluster.mongodb.net/dbname
-JWT_SECRET=your_jwt_secret
-DEBUG=True  # Optional
-
-# Frontend
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_DEBUG=false  # Optional
-```
-
-Enjoy building! 🚀
+<div align="center">
+  <b>Happy Building! 🚀</b>
+</div>
