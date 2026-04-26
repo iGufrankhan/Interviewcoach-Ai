@@ -18,62 +18,62 @@ import Dbconfig.config
 try:
     from ResumeService.api.uploadresume import router as resume_router
 except:
-    resume_router = "RESUME_ROUTER_FAILED"
+    resume_router = None
 
 try:
     from ResumeService.api.getresumedata import router as update_router
 except:
-    update_router = "UPDATE_ROUTER_FAILED"
+    update_router = None
 
 try:
     from ResumeService.api.deleteresume import router as delete_router
 except:
-    delete_router = "DELETE_ROUTER_FAILED"
+    delete_router = None
 
 try:
     from AuthService.api.register_api import router as register_router
 except:
-    register_router = "REGISTER_ROUTER_FAILED"
+    register_router = None
 
 try:
     from AuthService.api.login_api import router as login_router
 except:
-    login_router = "LOGIN_ROUTER_FAILED"
+    login_router = None
 
 try:
     from AuthService.api.logout import api_router as logout_router
 except:
-    logout_router = "LOGOUT_ROUTER_FAILED"
+    logout_router = None
 
 try:
     from AuthService.api.resetpassword_api import api_router as resetpassword_router
 except:
-    resetpassword_router = "PASSWORD_RESET_ROUTER_FAILED"
+    resetpassword_router = None
 
 try:
     from AuthService.api.refreshtoken import router as refresh_token_router
 except:
-    refresh_token_router = "REFRESH_TOKEN_ROUTER_FAILED"
+    refresh_token_router = None
 
 try:
     from JobMaching.api.analyse import router as analyse_router
 except:
-    analyse_router = "ANALYSE_ROUTER_FAILED"
+    analyse_router = None
 
 try:
     from interviewService.api.question_gen import router as question_gen_router
 except:
-    question_gen_router = "QUESTION_GEN_ROUTER_FAILED"
+    question_gen_router = None
 
 try:
     from chat_agent.api.chatBot import router as chat_router
 except:
-    chat_router = "CHAT_ROUTER_FAILED"
+    chat_router = None
 
 try:
     from interviewService.api.interview_flow import router as interview_flow_router
 except:
-    interview_flow_router = "INTERVIEW_FLOW_ROUTER_FAILED"
+    interview_flow_router = None
 
 
 # ===== LIFESPAN =====
