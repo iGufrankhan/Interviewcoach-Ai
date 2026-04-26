@@ -33,6 +33,10 @@ async def lifespan(app: FastAPI):
     await Dbconfig.config.init_db()
     yield
 
+
+print("APP STARTING")
+
+
 app = FastAPI(
     title="Interview Coach AI",
     description="AI-powered interview preparation platform with AI coaching",
