@@ -8,6 +8,29 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from utils.apierror import APIError
 from utils.constant import (EMBEDDING_MODEL, HF_TOKEN, RAG_CHUNK_SIZE, RAG_CHUNK_OVERLAP, RAG_RETRIEVER_K,CACHE_TTL)
+
+
+from huggingface_hub import InferenceClient
+
+class HFEmbeddingAPI:
+    def __init__(self, token):
+        self.client = InferenceClient(token=token)
+        self.model = EMBEDDING_MODEL
+
+    def embed_documents(self, texts):
+        return self.client.feature_extraction(
+            model=self.model,
+            inputs=texts
+        )
+
+    def embed_query(self, text):
+        return self.client.feature_extraction(
+            model=self.model,
+            inputs=[text]
+        )[0]
+
+
+
 class RagData:
     # Cache with TTL: {hash: (retriever, timestamp)}
     _cache = {}
@@ -20,10 +43,7 @@ class RagData:
     def __init__(self, job_description: str, resume_data: dict = None):
         self.job_description = job_description
         self.resume_data = resume_data or {}
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name=EMBEDDING_MODEL,
-            huggingfacehub_api_token=HF_TOKEN if HF_TOKEN else None
-        )
+        self.embeddings = HFEmbeddingAPI(HF_TOKEN)
     
     @classmethod
     def _is_cache_expired(cls, cache_entry: tuple) -> bool:
