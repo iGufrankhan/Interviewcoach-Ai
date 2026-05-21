@@ -63,7 +63,6 @@ class ChatBotService:
             
             return resume_data
         except Exception as e:
-            print(f"Error fetching resume: {e}")
             return {}
         
     async def validate_session_ownership(self, session_id: str) -> bool:
@@ -74,7 +73,6 @@ class ChatBotService:
                 return False
             return session.email == self.user_email
         except Exception as e:
-            print(f"Error validating session: {e}")
             return False
     
     async def search_messages(self, keywords: List[str], session_id: Optional[str] = None, limit: int = 5) -> List[Dict]:
@@ -99,7 +97,6 @@ class ChatBotService:
                 for msg in messages
             ]
         except Exception as e:
-            print(f"Error searching messages: {e}")
             return []
     
     async def get_relevant_context(self, session_id: str, message: str, limit: int = 3) -> str:
@@ -114,7 +111,6 @@ class ChatBotService:
             
             return "\n".join(context_lines) if context_lines else ""
         except Exception as e:
-            print(f"Error retrieving context: {e}")
             return ""
     
     async def get_session_stats(self, session_id: str) -> Dict:
@@ -135,7 +131,6 @@ class ChatBotService:
                 "session_duration": self._calculate_duration(session) if session else None
             }
         except Exception as e:
-            print(f"Error getting session stats: {e}")
             return {}
     
     def _calculate_duration(self, session) -> str:
@@ -154,10 +149,8 @@ class ChatBotService:
                 title=title
             )
             await new_session.async_save()
-            print(f"[ChatBot] New session created: {new_session.id}")
             return str(new_session.id)
         except Exception as e:
-            print(f"Error creating session: {e}")
             raise APIError(status_code=500, message="Failed to create session", error_code="SESSION_CREATE_ERROR")
    
     async def get_session_history(self, session: str) -> BaseChatMessageHistory:
@@ -191,10 +184,18 @@ class ChatBotService:
             content=message
         )
         await msg.async_save()
-        print(f"[ChatBot] User message saved to MongoDB for session {session_id}")
         
-        # Get session history (append new message instead of clearing cache)
-        session_history = self.get_session_history(session_id)
+        # Pre-load session history from MongoDB (populates self.store cache)
+        await self.get_session_history(session_id)
+        
+        # Create sync getter that returns from cache
+        def get_session_history_sync(session_id: str):
+            if session_id not in self.store:
+                self.store[session_id] = ChatMessageHistory()
+            return self.store[session_id]
+        
+        # Get cached session history
+        session_history = get_session_history_sync(session_id)
         session_history.add_user_message(message)
         
         # Fetch user's resume data (uses cache with TTL)
@@ -231,7 +232,7 @@ Ensure responses are consistent with previous conversation context."""
         # Conversational chain with memory
         conversational_chain = RunnableWithMessageHistory(
             question_answer_chain,
-            self.get_session_history,
+            get_session_history_sync,
             input_messages_key="input",
             history_messages_key="chat_history",
         )
@@ -249,7 +250,6 @@ Ensure responses are consistent with previous conversation context."""
             content=response
         )
         await ai_msg.async_save()
-        print(f"[ChatBot] AI response saved to MongoDB for session {session_id}")
         
         # Append AI message to cache
         session_history.add_ai_message(response)
@@ -260,9 +260,8 @@ Ensure responses are consistent with previous conversation context."""
             if session:
                 session.updated_at = datetime.now()
                 await session.async_save()
-                print(f"[ChatBot] Session {session_id} timestamp updated")
         except Exception as e:
-            print(f"Error updating session timestamp: {e}")
+            pass
         
         return response
     
@@ -344,7 +343,6 @@ Ensure responses are consistent with previous conversation context."""
                 for msg in messages
             ]
         except Exception as e:
-            print(f"Error retrieving messages: {e}")
             return []
     
     async def delete_session(self, session_id: str) -> bool:
@@ -360,8 +358,6 @@ Ensure responses are consistent with previous conversation context."""
             if session_id in self.store:
                 del self.store[session_id]
             
-            print(f"[ChatBot] Session {session_id} and all messages deleted")
             return True
         except Exception as e:
-            print(f"Error deleting session: {e}")
             return False

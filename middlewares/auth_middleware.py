@@ -42,6 +42,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if request.url.path in self.PUBLIC_ROUTES:
             return await call_next(request)
         
+        # Allow OPTIONS requests (CORS preflight) without authentication
+        if request.method == "OPTIONS":
+            return await call_next(request)
 
         auth_endpoints = {"/api/login", "/api/auth", "/login"}
         if any(request.url.path.startswith(endpoint) for endpoint in auth_endpoints):

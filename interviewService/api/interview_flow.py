@@ -22,7 +22,7 @@ router = APIRouter(
 @router.post("/start")
 async def start_interview(req: StartInterviewRequest, request: Request):
     user = request.state.user
-    """Start a new interview session and generate 2 questions"""
+    """Start a new interview session and generate 10 questions"""
     try:
         api_key = GROQ_API_KEY
         if not api_key:
@@ -77,16 +77,16 @@ async def submit_answer(req: SubmitAnswerRequest, request: Request):
     user = request.state.user
     try:
         # Validate session exists and belongs to user
-        interview = await db_find_one(InterviewSession, id=req.session_id)
+        interview = await InterviewSession.async_find_one(id=req.session_id)
         if not interview:
             raise APIError(status_code=404, message="Interview session not found", error_code="SESSION_NOT_FOUND")
         
-        user_obj = await db_find_one(User, email=user.email)
+        user_obj = await User.async_find_one(email=user.email)
         if interview.user != user_obj:
             raise APIError(status_code=403, message="Unauthorized", error_code="UNAUTHORIZED")
         
         # Handle audio input
-        answer_text = request.answer
+        answer_text = req.answer
         if req.use_audio:
             return error_response(
                 message="Audio answers are currently disabled. Please type your answer.",

@@ -3,28 +3,46 @@ from utils.apierror import APIError
 from utils.apiresponse import success_response
 from utils.error_codes import ErrorCode
 from utils.constant import GROQ_API_KEY, MAX_FILE_UPLOAD_SIZE
-from ResumeService.services.resumeservice import ResumeService
 from ResumeService.utils.file_validators import validate_file_extension
 import logging
 
 logger = logging.getLogger(__name__)
 
+
 router = APIRouter(
     tags=["Resume Upload"]
 )
 
-if not GROQ_API_KEY:
-    raise APIError(
-        error_code=ErrorCode.MISSING_API_KEY,
-        internal_message="GROQ_API_KEY environment variable not set"
-    )
-
 groq_api_key = GROQ_API_KEY
 
 
-@router.post("/upload-resume")
+@router.post(
+    "/upload-resume",
+    tags=["Resume Upload"],
+    status_code=201,
+    responses={
+        400: {"description": "Invalid file or request"},
+        401: {"description": "Unauthorized"},
+        413: {"description": "File too large"}
+    }
+)
 async def upload_resume(request: Request, file: UploadFile = File(...)):
-    """Upload and process resume for authenticated user - Requires authentication"""
+    """Upload and process resume for authenticated user - Requires authentication
+    
+    Returns:
+        Resume data with analysis results
+    """
+    
+    # Lazy import to avoid issues with missing API keys
+    from ResumeService.services.resumeservice import ResumeService
+    
+    # Check if GROQ API key is configured
+    if not groq_api_key:
+        raise APIError(
+            error_code=ErrorCode.MISSING_API_KEY,
+            message="Resume processing service not available",
+            internal_message="GROQ_API_KEY environment variable not set"
+        )
     
     # Use authenticated user's email
     user = request.state.user
@@ -60,7 +78,7 @@ async def upload_resume(request: Request, file: UploadFile = File(...)):
         )
         
         # Process resume (extracts data)
-        processed_data = resume_service.process_resume(file)
+        processed_data = await resume_service.process_resume(file)
         
         return success_response(
             message="Resume uploaded and saved successfully",
@@ -71,8 +89,10 @@ async def upload_resume(request: Request, file: UploadFile = File(...)):
     except APIError:
         raise
     except Exception as e:
+        logger.error(f"❌ Resume processing failed: {str(e)}", exc_info=True)
         raise APIError(
             error_code=ErrorCode.RESUME_PROCESSING_FAILED,
+            message=f"Failed to process resume: {str(e)}",
             internal_message=str(e)
         )
         

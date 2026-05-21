@@ -157,8 +157,9 @@ async def complete_registration(email: str, password: str, fullname: str, regist
    
   
     # Generate access token for the newly registered user
-    access_token = create_access_token(user_id=str(new_user.id))
-    refresh_token = create_refresh_token(user_id=str(new_user.id))
+    # Use email as user_id so middleware can find the user
+    access_token = create_access_token(user_id=email)
+    refresh_token = create_refresh_token(user_id=email)
     new_user.RefreshToken = refresh_token
     await new_user.async_save()
     

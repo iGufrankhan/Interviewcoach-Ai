@@ -30,15 +30,7 @@ async def get_user_resumes(
         if total == 0:
             return success_response(
                 message="No resumes found for this user",
-                data={
-                    "resumes": [],
-                    "pagination": {
-                        "page": page,
-                        "limit": limit,
-                        "total": 0,
-                        "total_pages": 0
-                    }
-                },
+                data=[],
                 status_code=200
             )
         
@@ -60,15 +52,7 @@ async def get_user_resumes(
         
         return success_response(
             message="Resumes found",
-            data={
-                "resumes": resumes_list,
-                "pagination": {
-                    "page": page,
-                    "limit": limit,
-                    "total": total,
-                    "total_pages": (total + limit - 1) // limit
-                }
-            },
+            data=resumes_list,
             status_code=200
         )
     except Exception as e:
@@ -80,9 +64,21 @@ async def get_user_resumes(
 
 @router.get("/resume/{resume_id}")
 async def get_resume(resume_id:str, request: Request):
+    from bson import ObjectId
     user = request.state.user
     try:
-        resume = await Resume_data.async_find_one(id=resume_id)
+        # Convert resume_id string to ObjectId
+        try:
+            resume_oid = ObjectId(resume_id)
+        except:
+            return error_response(
+                message="Invalid resume ID format",
+                error_code="INVALID_RESUME_ID",
+                status_code=400
+            )
+        
+        # Find resume by ObjectId and verify it belongs to the user
+        resume = await Resume_data.async_find_one(id=resume_oid, user=user)
         if not resume:
             return error_response(
                 message="Resume Not Found",
@@ -90,7 +86,7 @@ async def get_resume(resume_id:str, request: Request):
                 status_code=404
             )
         resume_dict = resume.to_mongo()
-        resume_dict["id"] = str(resume_dict.pop("_id"))
+        resume_dict["resume_id"] = str(resume_dict.pop("_id"))
         # Convert user ObjectId to string
         if "user" in resume_dict:
             resume_dict["user_id"] = str(resume_dict["user"])

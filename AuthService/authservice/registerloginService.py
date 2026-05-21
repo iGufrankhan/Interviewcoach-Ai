@@ -36,13 +36,10 @@ async def CompleteRegistration(email: str, password: str, fullname: str = "", re
 
 async def LoginUser(email: str, password: str) -> UserResponse:
     login_result = await login_user(email, password)
-
-    if(login_result.access_token and login_result.refresh_token):
-        set_cookies([
-            ("access_token", login_result.access_token, {"httponly": True, "secure": True}),
-            ("refresh_token", login_result.refresh_token, {"httponly": True, "secure": True})
-        ])
-        
+    
+    # login_result is a JSONResponse, extract the tokens from its body
+    # The response structure is: {"message": "...", "data": {"access_token": "...", "refresh_token": "..."}}
+    # We need to return it as-is since it's already formatted as JSONResponse
     return login_result
          
     

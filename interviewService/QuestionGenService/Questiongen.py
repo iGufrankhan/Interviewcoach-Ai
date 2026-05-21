@@ -18,7 +18,7 @@ class QuestionGen:
 **CRITICAL INSTRUCTIONS:**
 1. Look for the section marked "==================== JOB INFORMATION ===================="
 2. Extract: role, required skills, experience level, responsibilities, qualifications
-3. Generate 2 UNIQUE questions based ONLY on this job description
+3. Generate 10 UNIQUE questions based ONLY on this job description
 4. Use the CANDIDATE RESUME section only to:
    - Create follow-up questions if resume shows skill mismatches
    - Ask about relevant experience from the candidate's background
@@ -31,8 +31,8 @@ class QuestionGen:
   * Experience with required tools/technologies
   * Relevant past work examples
   * Ability to handle job responsibilities
-- Format: numbered list (1. Question here, 2. Question here, etc)
-- Only return the 2 numbered questions - no explanations, preamble, or additional text
+- Format: numbered list (1. Question here, 2. Question here, ... 10. Question here)
+- Only return the 10 numbered questions - no explanations, preamble, or additional text
 
 CONTEXT:
 {context}
@@ -49,8 +49,19 @@ CONTEXT:
             )
             final_prompt = prompt_template.format(context=context)
             response = llm.invoke(final_prompt)
-            questions = response.content.strip().split("\n")
-            questions = [q.strip("- ").strip() for q in questions if q.strip()]
+            
+            # Parse only numbered questions (1. 2. 3. etc)
+            lines = response.content.strip().split("\n")
+            questions = []
+            for line in lines:
+                line = line.strip()
+                # Match lines starting with number followed by . or )
+                if line and line[0].isdigit():
+                    # Remove number prefix (e.g., "1. " or "1) ")
+                    question = line.split(".", 1)[-1].split(")", 1)[-1].strip()
+                    if question:  # Only add non-empty questions
+                        questions.append(question)
+            
             return questions
         except Exception as e:
             raise APIError(status_code=500, message=str(e), error_code="QUESTION_GENERATION_FAILED")

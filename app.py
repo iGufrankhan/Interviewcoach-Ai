@@ -14,66 +14,34 @@ from utils.constant import CORS_ORIGINS
 import Dbconfig.config
 
 
-# ===== ROUTERS (simple try/catch) =====
+# ===== ROUTERS =====
 try:
     from ResumeService.api.uploadresume import router as resume_router
-except:
+    print("✅ Resume router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load resume router: {e}")
     resume_router = None
 
-try:
-    from ResumeService.api.getresumedata import router as update_router
-except:
-    update_router = None
+from ResumeService.api.getresumedata import router as update_router
+from ResumeService.api.deleteresume import router as delete_router
+from ResumeService.api.debug_resume import router as debug_router
+from AuthService.api.register_api import router as register_router
+from AuthService.api.login_api import router as login_router
+from AuthService.api.logout import api_router as logout_router
+from AuthService.api.resetpassword_api import api_router as resetpassword_router
+from AuthService.api.refreshtoken import router as refresh_token_router
 
-try:
-    from ResumeService.api.deleteresume import router as delete_router
-except:
-    delete_router = None
-
-try:
-    from AuthService.api.register_api import router as register_router
-except:
-    register_router = None
-
-try:
-    from AuthService.api.login_api import router as login_router
-except:
-    login_router = None
-
-try:
-    from AuthService.api.logout import api_router as logout_router
-except:
-    logout_router = None
-
-try:
-    from AuthService.api.resetpassword_api import api_router as resetpassword_router
-except:
-    resetpassword_router = None
-
-try:
-    from AuthService.api.refreshtoken import router as refresh_token_router
-except:
-    refresh_token_router = None
-
+# JobMaching requires PyTorch which may fail to load on Windows
 try:
     from JobMaching.api.analyse import router as analyse_router
-except:
+    print("✅ JobMaching router loaded successfully")
+except Exception as e:
+    print(f"⚠️ JobMaching router failed to load: {e}")
     analyse_router = None
 
-try:
-    from interviewService.api.question_gen import router as question_gen_router
-except:
-    question_gen_router = None
-
-try:
-    from chat_agent.api.chatBot import router as chat_router
-except:
-    chat_router = None
-
-try:
-    from interviewService.api.interview_flow import router as interview_flow_router
-except:
-    interview_flow_router = None
+from interviewService.api.question_gen import router as question_gen_router
+from chat_agent.api.chatBot import router as chat_router
+from interviewService.api.interview_flow import router as interview_flow_router
 
 
 # ===== LIFESPAN =====
@@ -163,18 +131,20 @@ async def health():
 
 
 # ===== ROUTES =====
-if register_router: app.include_router(register_router)
-if login_router: app.include_router(login_router)
-if refresh_token_router: app.include_router(refresh_token_router)
-if resetpassword_router: app.include_router(resetpassword_router)
-if logout_router: app.include_router(logout_router)
+app.include_router(register_router)
+app.include_router(login_router)
+app.include_router(refresh_token_router)
+app.include_router(resetpassword_router)
+app.include_router(logout_router)
 
-if resume_router: app.include_router(resume_router, prefix="/api/resume")
-if update_router: app.include_router(update_router, prefix="/api/resume")
-if delete_router: app.include_router(delete_router, prefix="/api/resume")
 
-if analyse_router: app.include_router(analyse_router, prefix="/api/jobmatching")
-if question_gen_router: app.include_router(question_gen_router, prefix="/api/interviewservice")
+app.include_router(resume_router, prefix="/api/resume")
 
-if chat_router: app.include_router(chat_router)
-if interview_flow_router: app.include_router(interview_flow_router)
+
+app.include_router(update_router, prefix="/api/resume")
+app.include_router(delete_router, prefix="/api/resume")
+app.include_router(debug_router, prefix="/api/resume")
+app.include_router(analyse_router, prefix="/api/jobmatching")
+
+app.include_router(chat_router)
+app.include_router(interview_flow_router)

@@ -12,20 +12,8 @@ logger = logging.getLogger(__name__)
 
 class ResumeService:
 
-    async def __init__(self, upload_dir: str, groq_api_key: str, user_id: str):
+    def __init__(self, upload_dir: str, groq_api_key: str, user_id: str):
         logger.info(f"🔧 ResumeService init - user_id (email): {user_id}")
-        
-        # user_id is now the email (from JWT token)
-        user_obj = await User.async_find_one(email=user_id)
-        if not user_obj:
-            logger.error(f"❌ User not found: {user_id}")
-            raise APIError(status_code=404, message=f"User with email {user_id} not found", error_code="USER_NOT_FOUND")
-        
-        logger.info(f"✅ User found: {user_obj.email}")
-        
-        if not groq_api_key:
-            logger.error("❌ GROQ API key is missing")
-            raise APIError(status_code=400, message="GROQ API key is required", error_code="MISSING_API_KEY")
         
         self.upload_dir = upload_dir
         self.analyzer = ResumeAnalyzer(api_key=groq_api_key)
@@ -36,7 +24,7 @@ class ResumeService:
         os.makedirs(self.upload_dir, exist_ok=True)
         logger.info(f"✅ Upload directory ready: {self.upload_dir}")
 
-    def process_resume(self, file):
+    async def process_resume(self, file):
         logger.info(f"📄 Processing resume: {file.filename}")
 
         # 1️⃣ Save uploaded file
@@ -84,7 +72,7 @@ class ResumeService:
         # 5️⃣ Save structured resume data
         logger.info("📊 Saving structured resume data...")
         try:
-            saved_resume = save_resume(structured_data, self.user_id)
+            saved_resume = await save_resume(structured_data, self.user_id)
             logger.info(f"✅ Resume saved to database")
             return saved_resume
         except Exception as e:

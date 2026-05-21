@@ -82,7 +82,7 @@ async def verify_password_reset_otp(email: str, otp: str):
         )
   
     reset_token = create_access_token(
-        user_id=str(user.id)
+        user_id=email  # Use email instead of ObjectId
     )
 
     # Optionally, you can delete the OTP after successful verification

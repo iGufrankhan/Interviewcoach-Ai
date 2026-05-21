@@ -29,8 +29,8 @@ async def login_user(email: str, password: str):
         )
 
     # Create token with email as user_id (matching auth_middleware expectations)
-    access_token = create_access_token(user_id=str(user.id))
-    refresh_token = create_refresh_token(user_id=str(user.id))
+    access_token = create_access_token(user_id=email)
+    refresh_token = create_refresh_token(user_id=email)
     
     user.RefreshToken = refresh_token
     await user.async_save()
@@ -65,9 +65,9 @@ async def Refreshtoken(refresh_token: str):
         
     try:
         payload = verify_access_token(refresh_token)
-        user_id = payload.get("user_id")
+        user_email = payload.get("user_id")  # This is the email
         
-        user = await User.async_find_one(id=user_id)
+        user = await User.async_find_one(email=user_email)
         if not user or user.RefreshToken != refresh_token:
             raise APIError(
                 status_code=401,
@@ -75,8 +75,8 @@ async def Refreshtoken(refresh_token: str):
                 error_code="INVALID_REFRESH_TOKEN"
             )
             
-        # Generate new access token
-        new_access_token = create_access_token(user_id=str(user.id))
+        # Generate new access token with email
+        new_access_token = create_access_token(user_id=user_email)
         user.RefreshToken = refresh_token
         await user.async_save()
         return success_response(

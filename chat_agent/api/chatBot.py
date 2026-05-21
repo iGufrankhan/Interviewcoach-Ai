@@ -31,7 +31,7 @@ async def create_session(req: CreateSessionRequest, request: Request):
             )
         
         service = ChatBotService(api_key, user.email)
-        session_id = service.create_session(req.title)
+        session_id = await service.create_session(req.title)
         
         return success_response(
             message="Chat session created",
@@ -69,14 +69,14 @@ async def send_message(req: SendMessageRequest, request: Request):
         service = ChatBotService(api_key, user.email)
         
         # Validate user owns this session
-        if not service.validate_session_ownership(req.session_id):
+        if not await service.validate_session_ownership(req.session_id):
             return error_response(
                 message="Unauthorized: Session not found or does not belong to user",
                 error_code="UNAUTHORIZED_SESSION",
                 status_code=403
             )
         
-        response = service.send_message(req.session_id, req.message)
+        response = await service.send_message(req.session_id, req.message)
         
         return success_response(
             message="Message processed",
@@ -133,13 +133,13 @@ async def get_sessions(
         service = ChatBotService(api_key, user.email)
     
         # Get total count for pagination metadata
-        total = service.get_sessions_count()
+        total = await service.get_sessions_count()
         
         # Calculate skip for database query
         skip = (page - 1) * limit
         
         # Get paginated sessions
-        sessions = service.get_all_sessions(skip=skip, limit=limit)
+        sessions = await service.get_all_sessions(skip=skip, limit=limit)
         
         return success_response(
             message="Sessions retrieved",
@@ -188,7 +188,7 @@ async def get_session_history(
         service = ChatBotService(api_key, user.email)
         
         # Validate user owns this session
-        if not service.validate_session_ownership(session_id):
+        if not await service.validate_session_ownership(session_id):
             return error_response(
                 message="Unauthorized: Session not found or does not belong to user",
                 error_code="UNAUTHORIZED_SESSION",
@@ -196,7 +196,7 @@ async def get_session_history(
             )
         
         # Get messages with pagination
-        messages = service.get_session_messages(session_id, limit=limit, skip=skip)
+        messages = await service.get_session_messages(session_id, limit=limit, skip=skip)
         
         return success_response(
             message="Chat history retrieved",
@@ -231,14 +231,14 @@ async def get_session_stats(session_id: str, request: Request):
         service = ChatBotService(api_key, user.email)
         
         # Validate user owns this session
-        if not service.validate_session_ownership(session_id):
+        if not await service.validate_session_ownership(session_id):
             return error_response(
                 message="Unauthorized: Session not found or does not belong to user",
                 error_code="UNAUTHORIZED_SESSION",
                 status_code=403
             )
         
-        stats = service.get_session_stats(session_id)
+        stats = await service.get_session_stats(session_id)
         
         return success_response(
             message="Session statistics retrieved",
@@ -269,14 +269,14 @@ async def delete_session(session_id: str, request: Request):
         service = ChatBotService(api_key, user.email)
         
         # Validate user owns this session
-        if not service.validate_session_ownership(session_id):
+        if not await service.validate_session_ownership(session_id):
             return error_response(
                 message="Unauthorized: Session not found or does not belong to user",
                 error_code="UNAUTHORIZED_SESSION",
                 status_code=403
             )
         
-        service.delete_session(session_id)
+        await service.delete_session(session_id)
         
         return success_response(
             message="Session deleted successfully",

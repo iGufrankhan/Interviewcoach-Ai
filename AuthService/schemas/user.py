@@ -14,14 +14,6 @@ class UserLoginRequest(BaseModel):
     
     email: EmailStr = Field(..., description="The user's email address")
     password: str = Field(..., min_length=8, description="The user's password")
-    access_token: Optional[str] = Field(
-        default=None, 
-        description="Access token for authenticated requests (optional)"
-    )
-    refresh_token: Optional[str] = Field(
-        default=None, 
-        description="Refresh token for obtaining new access tokens (optional)"
-    )
 
     @validator("password")
     def validate_password(cls, v: str) -> str:
