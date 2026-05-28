@@ -1,134 +1,143 @@
-# Interview Coach AI
+<h1 align="center">✨ Interview Coach AI</h1>
 
-Interview Coach AI is a full-stack interview preparation workspace with a FastAPI backend and a Next.js frontend. The backend handles authentication, resume ingestion, parsing, analysis, interview question generation, and chat flows. The frontend provides the landing page, auth screens, dashboards, and product routes.
+<div align="center">
+  <p><strong>Your Ultimate AI-Powered Interview Preparation Platform</strong></p>
+  <p>Interview Coach AI is a full-stack web application with a <strong>FastAPI backend</strong> and a sleek <strong>Next.js frontend</strong>, designed to help you land your dream job.</p>
+</div>
 
-## What It Does
+---
 
-- Upload resumes in PDF, DOCX, or TXT format.
-- Extract structured resume data with a Groq-powered LLM.
-- Store and retrieve resume records per authenticated user.
-- Generate interview questions and interview flow content.
-- Provide chat-based interview coaching.
-- Serve a modern Next.js marketing and application UI.
+## 🌟 What It Does
 
-## Repository Layout
+- 📄 **Upload & Analyze Resumes**: Extract key skills and experiences instantly.
+- 🎯 **Generate Interview Questions**: Tailored questions based on your resume and target job.
+- 💬 **AI Chat Coach**: Context-aware interview prep assistance.
+- 💼 **Job Matching**: Compare your profile against job descriptions.
+- 🔐 **Secure Auth**: OTP-based authentication flows and JWT token management.
 
-```text
-app.py                     FastAPI application entrypoint and router wiring
-AuthService/               Authentication and account management backend
-JobMaching/                Job matching backend routes and analysis logic
-ResumeService/             Resume upload, parsing, preprocessing, and storage
-chat_agent/                Chat assistant backend routes
-interviewService/          Interview question and interview flow backend routes
-Frontend/                  Next.js 16 frontend application
-utils/                     Shared response, error, config, and token helpers
-Dbconfig/                  Database initialization and status helpers
-middlewares/               Auth and rate-limit middleware
-requirements.txt           Python dependencies for the backend
-```
+---
 
-## Backend Overview
+## 🚀 Live Demo & API
 
-The backend entrypoint is [app.py](app.py). It loads environment variables, initializes MongoDB on startup, enables CORS, and registers routers for auth, resume services, job matching, chat, and interview flows.
+The backend API is successfully deployed on Render:
+- 🔌 **Production Backend API:** [`https://interviewcoach-ai-backend.onrender.com/`](https://interviewcoach-ai-backend.onrender.com/)
 
-The resume pipeline is split across several modules:
+*(Note: The frontend talks to the backend through the `NEXT_PUBLIC_API_URL` which should be set to this URL in production.)*
 
-- [ResumeService/api/uploadresume.py](ResumeService/api/uploadresume.py) handles authenticated resume uploads.
-- [ResumeService/services/resumeservice.py](ResumeService/services/resumeservice.py) saves the file, extracts text, preprocesses it, runs LLM analysis, and persists structured results.
-- [ResumeService/loaders/resume_loaders.py](ResumeService/loaders/resume_loaders.py) loads PDF, DOCX, and TXT files.
-- [ResumeService/preprocessing/preprocessing.py](ResumeService/preprocessing/preprocessing.py) cleans extracted text.
-- [ResumeService/analyzer/analysis.py](ResumeService/analyzer/analysis.py) parses resume content into structured JSON.
-- [ResumeService/api/getresumedata.py](ResumeService/api/getresumedata.py) returns the authenticated user’s saved resumes.
-- [ResumeService/api/deleteresume.py](ResumeService/api/deleteresume.py) deletes a resume after ownership checks.
+---
 
-The shared config in [utils/constant.py](utils/constant.py) shows the main environment values the app expects:
+## 📂 Project Structure
 
-- `DATABASE_URL`
-- `DATABASE_NAME`
-- `ACCESS_TOKEN_KEY`
-- `REFRESH_TOKEN_KEY`
-- `GROQ_API_KEY`
-- `HF_TOKEN`
-- `GMAIL_USER`
-- `GMAIL_APP_PASSWORD`
-- `CORS_ORIGINS`
-- `MAX_FILE_UPLOAD_SIZE`
+| Component | Description |
+|-----------|-------------|
+| [**app.py**](app.py) | Main FastAPI entrypoint |
+| [**Frontend/**](Frontend) | Next.js frontend application |
+| [**ResumeService/**](ResumeService) | Resume upload, parsing, and analysis logic |
+| [**AuthService/**](AuthService) | Login, registration, OTP, and password reset |
+| [**interviewService/**](interviewService) | Interview flow and dynamic question generation |
+| [**chat_agent/**](chat_agent) | AI Chat assistant routes |
+| [**JobMaching/**](JobMaching) | Match resume to job description |
 
-## Frontend Overview
+---
 
-The frontend lives in [Frontend/package.json](Frontend/package.json) and uses Next.js 16, React 19, Tailwind CSS 4, and TypeScript. The app folder includes the landing page plus route groups for auth, dashboard, resume, job matching, interview prep, and chat.
+## 📚 Detailed Documentation
 
-Important frontend files:
+Check out the following dedicated docs for more in-depth information:
 
-- [Frontend/app/landing-page.tsx](Frontend/app/landing-page.tsx) is the marketing landing page.
-- [Frontend/app/page.tsx](Frontend/app/page.tsx) is the main entry page for the app.
-- [Frontend/app/layout.tsx](Frontend/app/layout.tsx) provides shared layout structure.
-- [Frontend/app/globals.css](Frontend/app/globals.css) contains global styles.
+- [✨ All Features (ALL_FEATURES.md)](ALL_FEATURES.md)
+- [🔌 Backend API (BACKEND_API.md)](BACKEND_API.md)
+- [⚡ Quick Start Guide (QUICK_START.md)](QUICK_START.md)
+- [🔗 Backend-Frontend Integration (BACKEND_FRONTEND_INTEGRATION.md)](BACKEND_FRONTEND_INTEGRATION.md)
 
-The landing page redirects authenticated users to `/dashboard` and otherwise presents the product overview, feature cards, workflow steps, and calls to action.
+---
 
-## Setup
+## 🛠️ Local Setup
 
-### Prerequisites
-
-- Python 3.8 or newer
-- Node.js 18+ for the frontend
-- MongoDB running locally or in Atlas
-- Groq API key
-- Hugging Face token if you use the embedding or RAG features
-
-### Backend
+### 1. Backend Setup
 
 ```bash
+# Create and activate virtual environment
 python -m venv venv
+# Windows
 venv\Scripts\activate
+# Mac/Linux
+# source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
+
+# Start the server
 uvicorn app:app --reload
 ```
+> The backend runs locally at `http://localhost:8000`.
 
-The backend starts on `http://localhost:8000` by default.
-
-### Frontend
+### 2. Frontend Setup
 
 ```bash
 cd Frontend
 npm install
 npm run dev
 ```
+> The frontend runs locally at `http://localhost:3000`.
 
-The frontend runs on the Next.js default port, usually `http://localhost:3000`.
+---
 
-## Environment Variables
+## ⚙️ Environment Variables
 
-Create a `.env` file in the workspace root for the backend. The code reads these values directly:
+### Backend (`.env`)
 
 ```env
 DATABASE_URL=mongodb://localhost:27017/interviewcoach
 DATABASE_NAME=interviewcoach
 ACCESS_TOKEN_KEY=your_access_token_secret
 REFRESH_TOKEN_KEY=your_refresh_token_secret
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_SECONDS=3600
+REFRESH_TOKEN_EXPIRE_SECONDS=604800
 GROQ_API_KEY=your_groq_api_key
 HF_TOKEN=your_hugging_face_token
 GMAIL_USER=your_email@gmail.com
 GMAIL_APP_PASSWORD=your_gmail_app_password
-CORS_ORIGINS=http://localhost:3000,http://localhost:3001
+CORS_ORIGINS=http://localhost:3000,http://localhost:3001,https://interviewcoach-ai-backend.onrender.com
 MAX_FILE_UPLOAD_SIZE=10485760
 ```
 
-## Main API Routes
+### Frontend Deployment on Vercel (`.env.local`)
 
-The exact route surface depends on the mounted routers in [app.py](app.py), but the resume endpoints currently exposed include:
+```env
+NEXT_PUBLIC_API_URL=https://interviewcoach-ai-backend.onrender.com
+BACKEND_URL=https://interviewcoach-ai-backend.onrender.com
+```
 
-- `POST /api/resume/upload-resume`
-- `GET /api/resume/user-resumes`
-- `GET /api/resume/resume/{resume_id}`
-- `DELETE /api/resume/delete-resume/{resume_id}`
+---
 
-Other routers are mounted for authentication, job matching, chat, and interview flows.
+## ☁️ Deployment
 
-## Notes
+### Frontend on Vercel
+- Root directory: `Frontend`
+- Framework: Next.js
+- Set the frontend env vars above pointing to the deployed backend.
 
-- The backend uses middleware for authentication and rate limiting.
-- Resume uploads are validated for file type, size, and non-empty content.
-- The resume analyzer expects clean text and returns structured JSON with name, skills, experience, education, and projects.
-- The frontend is already wired for authenticated redirects and a landing-page-first experience.
+### Backend on Render
+- Root directory: *repo root*
+- Build command: `pip install -r requirements.txt`
+- Start command: `uvicorn app:app --host 0.0.0.0 --port $PORT`
+
+---
+
+## 📝 Notes
+
+- The backend heavily leverages **MongoDB** and **Groq**.
+- Please keep the frontend and backend deployed as separate services for scalability.
+
+---
+
+## 🖼️ Project images
+
+Included visual assets for architecture and API screenshots:
+
+- ER diagram: ![ER Diagram](Project_images/er_diagram.png)
+- API full view: ![API Full](Project_images/fullapi.png)
+- Health endpoint screenshot: ![Health Screenshot](Project_images/health.png)
+
+These images are stored in the `Project_images` folder.
