@@ -1,15 +1,19 @@
-<h1 align="center">🔌 Backend API Documentation</h1>
-
 <div align="center">
-  <p>Complete reference for the Interview Coach AI REST API.</p>
-  <b>Base URL:</b> <code>http://localhost:8000</code> &nbsp;|&nbsp; <b>Version:</b> <code>1.1.0</code>
+  <h1>🔌 Backend API Documentation</h1>
+  <p><i>Complete and detailed reference for the Interview Coach AI REST API.</i></p>
+  
+  <p>
+    <b>Production API:</b> <code>https://interviewcoach-ai-backend.onrender.com/</code><br/>
+    <b>Local Base URL:</b> <code>http://localhost:8000</code><br/>
+    <b>API Version:</b> <code>1.1.0</code>
+  </p>
 </div>
 
 ---
 
 ## 📑 Table of Contents
 <details>
-<summary>Click to expand</summary>
+<summary><b>Click to expand</b></summary>
 
 1. [🔐 Authentication APIs](#-authentication-apis)
 2. [📄 Resume APIs](#-resume-apis)
@@ -23,18 +27,19 @@
 ---
 
 ## 🔐 Authentication APIs
-*All protected endpoints require the `Authorization: Bearer <jwt_token>` header.*
+
+> **Security Note:** All protected endpoints require the `Authorization: Bearer <jwt_token>` header.
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/auth/send-otp` | Send an OTP for registration. |
-| `POST` | `/api/auth/register` | Register a new user using the OTP. |
-| `POST` | `/api/login/` | Login and receive a JWT access token. |
-| `POST` | `/api/auth/request-password-reset` | Send an OTP to reset password. |
-| `POST` | `/api/auth/reset-password` | Set a new password using the OTP. |
+|:---:|:---|:---|
+| <kbd>POST</kbd> | `/api/auth/send-otp` | Send an OTP for registration. |
+| <kbd>POST</kbd> | `/api/auth/register` | Register a new user using the OTP. |
+| <kbd>POST</kbd> | `/api/login/` | Login and receive a JWT access token. |
+| <kbd>POST</kbd> | `/api/auth/request-password-reset` | Send an OTP to reset password. |
+| <kbd>POST</kbd> | `/api/auth/reset-password` | Set a new password using the OTP. |
 
 <details>
-<summary><b>View Example Payloads</b></summary>
+<summary><b>👀 View Example Payloads</b></summary>
 
 **Login Request:**
 ```json
@@ -43,6 +48,7 @@
   "password": "securePassword123"
 }
 ```
+
 **Login Response (200):**
 ```json
 {
@@ -61,31 +67,34 @@
 ## 📄 Resume APIs
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/resume/upload` | Upload a new resume (PDF, DOCX, TXT). |
-| `GET`  | `/resume/get` | Retrieve all parsed resumes for the user. |
-| `DELETE`| `/resume/delete/{resume_id}` | Delete a specific resume. |
+|:---:|:---|:---|
+| <kbd>POST</kbd> | `/api/resume/upload` | Upload a new resume (`PDF`, `DOCX`, `TXT`). |
+| <kbd>GET</kbd>  | `/api/resume/get` | Retrieve all parsed resumes for the user. |
+| <kbd>DELETE</kbd>| `/api/resume/delete/{resume_id}` | Delete a specific resume. |
 
 ---
 
 ## 🎯 Interview APIs
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/question_gen/generate` | Generate 10 role-specific questions based on a JD. |
-| `POST` | `/api/interview/start` | Start an active interview session. |
-| `POST` | `/api/interview/submit-answer`| Submit an answer (text or audio). |
-| `POST` | `/api/interview/transcribe-audio`| Convert Base64 audio into text via Google Speech. |
-| `POST` | `/api/interview/submit` | End the interview and get the final score and feedback. |
-| `GET`  | `/api/interview/sessions` | Get all past interviews. |
-| `GET`  | `/api/interview/session/{id}` | Get detailed feedback for a specific interview. |
+|:---:|:---|:---|
+| <kbd>POST</kbd> | `/api/question_gen/generate` | Generate role-specific questions based on a JD. |
+| <kbd>POST</kbd> | `/api/interview/start` | Start an active interview session. |
+| <kbd>POST</kbd> | `/api/interview/submit-answer`| Submit an answer (text or audio). |
+| <kbd>POST</kbd> | `/api/interview/transcribe-audio`| Convert Base64 audio into text via Google Speech. |
+| <kbd>POST</kbd> | `/api/interview/submit` | End the interview and get the final score and feedback. |
+| <kbd>GET</kbd>  | `/api/interview/sessions` | Get all past interviews. |
+| <kbd>GET</kbd>  | `/api/interview/session/{id}` | Get detailed feedback for a specific interview. |
 
 <details>
-<summary><b>Audio Transcription Rules</b></summary>
+<summary><b>🎙️ Audio Transcription Rules</b></summary>
 
-* **Formats:** WAV (recommended), MP3, WebM.
+* **Formats:** `WAV` (recommended), `MP3`, `WebM`.
 * **Requirements:** 16kHz sample rate, 5-60 seconds max duration.
-* **Payload:** `{ "audio_data": "base64_encoded_audio_string" }`
+* **Payload Format:** 
+  ```json
+  { "audio_data": "base64_encoded_audio_string" }
+  ```
 </details>
 
 ---
@@ -93,23 +102,23 @@
 ## 💬 Chat APIs
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/chat/create-session` | Initialize a new Chat Coach session. |
-| `POST` | `/api/chat/send-message` | Send a message to the AI coach. |
-| `POST` | `/api/chat/chat` | Quick chat with resume context. |
-| `GET`  | `/api/chat/sessions` | Retrieve all past chat sessions. |
-| `GET`  | `/api/chat/history/{id}` | Retrieve chat history for a session. |
+|:---:|:---|:---|
+| <kbd>POST</kbd> | `/api/chat/create-session` | Initialize a new Chat Coach session. |
+| <kbd>POST</kbd> | `/api/chat/send-message` | Send a message to the AI coach. |
+| <kbd>POST</kbd> | `/api/chat/chat` | Quick chat with resume context. |
+| <kbd>GET</kbd>  | `/api/chat/sessions` | Retrieve all past chat sessions. |
+| <kbd>GET</kbd>  | `/api/chat/history/{id}` | Retrieve chat history for a session. |
 
 ---
 
 ## 💼 Job Matching APIs
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/jobmatching/analyse` | Score a resume against a job description and get an action plan. |
+|:---:|:---|:---|
+| <kbd>POST</kbd> | `/api/jobmatching/analyse` | Score a resume against a job description and get an action plan. |
 
 <details>
-<summary><b>View Response Payload</b></summary>
+<summary><b>👀 View Response Payload</b></summary>
 
 ```json
 {
@@ -129,7 +138,7 @@
 
 ## ⚠️ Error Handling & Response Format
 
-**Standard Success Response:**
+**✅ Standard Success Response:**
 ```json
 {
   "status": "success",
@@ -138,7 +147,7 @@
 }
 ```
 
-**Standard Error Response:**
+**❌ Standard Error Response:**
 ```json
 {
   "status": "error",
@@ -148,10 +157,10 @@
 ```
 
 ### Common Error Codes
-* `MISSING_API_KEY` (400) - API key not configured.
-* `INVALID_TOKEN` (401) - JWT token invalid or expired.
-* `AUDIO_NOT_RECOGNIZED` (400) - Could not understand audio.
-* `INVALID_INPUT` (400) - Validation error in payload.
+- `MISSING_API_KEY` (400) - API key not configured.
+- `INVALID_TOKEN` (401) - JWT token invalid or expired.
+- `AUDIO_NOT_RECOGNIZED` (400) - Could not understand audio.
+- `INVALID_INPUT` (400) - Validation error in payload.
 
 ---
 
@@ -167,10 +176,13 @@ MONGODB_URI=your_mongodb_connection_string
 MAIL_USERNAME=your_email@gmail.com
 MAIL_PASSWORD=your_app_password
 ```
-* **GROQ API:** Get a free key from [console.groq.com](https://console.groq.com)
-* **CORS:** Ensure your frontend URL is added to the CORS configuration in `app.py`.
+
+> **Important Notes:**
+> - **GROQ API:** Get a free key from [console.groq.com](https://console.groq.com)
+> - **CORS:** Ensure your frontend URL is added to the CORS configuration in `app.py`. If deploying, add `https://interviewcoach-ai-backend.onrender.com/` and your frontend domain.
 
 ---
+
 <div align="center">
-  <i>For testing, use Swagger UI at <a href="http://localhost:8000/docs">http://localhost:8000/docs</a></i>
+  <p><i>For testing, use Swagger UI at <a href="http://localhost:8000/docs">http://localhost:8000/docs</a> or <a href="https://interviewcoach-ai-backend.onrender.com/docs">production docs</a></i></p>
 </div>

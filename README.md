@@ -40,6 +40,14 @@ The backend API is successfully deployed on Render:
 
 ---
 
+## 🖼️ Project images
+
+Included visual assets for architecture and API screenshots:
+
+- ER diagram: ![ER Diagram](Project_images/er_diagram.png)
+- API full view: ![API Full](Project_images/fullapi.png)
+- Health endpoint screenshot: ![Health Screenshot](Project_images/health.png)
+
 ## 📚 Detailed Documentation
 
 Check out the following dedicated docs for more in-depth information:
@@ -131,13 +139,3 @@ BACKEND_URL=https://interviewcoach-ai-backend.onrender.com
 - Please keep the frontend and backend deployed as separate services for scalability.
 
 ---
-
-## 🖼️ Project images
-
-Included visual assets for architecture and API screenshots:
-
-- ER diagram: ![ER Diagram](Project_images/er_diagram.png)
-- API full view: ![API Full](Project_images/fullapi.png)
-- Health endpoint screenshot: ![Health Screenshot](Project_images/health.png)
-
-These images are stored in the `Project_images` folder.
