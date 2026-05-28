@@ -1,214 +1,134 @@
-<h1 align="center">🎯 Interview Coach AI</h1>
+# Interview Coach AI
 
-<div align="center">
-  <p>An intelligent, FastAPI-based application that helps candidates prepare for interviews by analyzing job descriptions, matching resumes, generating targeted interview questions, and providing personalized feedback.</p>
-  
-  [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg?logo=python&logoColor=white)](https://www.python.org)
-  [![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-  [![MongoDB](https://img.shields.io/badge/MongoDB-Enabled-47A248.svg?logo=mongodb&logoColor=white)](https://www.mongodb.com)
-  [![Groq](https://img.shields.io/badge/LLM-Groq_Llama_3.1-f55036.svg)](https://groq.com)
-  [![LangChain](https://img.shields.io/badge/LangChain-Integration-00A6D6.svg)](https://langchain.com)
-  [![Render](https://img.shields.io/badge/Deployed_on-Render-46E3B7.svg?logo=render&logoColor=white)](https://interviewcoach-ai-backend.onrender.com)
-</div>
+Interview Coach AI is a full-stack interview preparation workspace with a FastAPI backend and a Next.js frontend. The backend handles authentication, resume ingestion, parsing, analysis, interview question generation, and chat flows. The frontend provides the landing page, auth screens, dashboards, and product routes.
 
-<br />
+## What It Does
 
-> **🚀 Live Backend API:** [Access Live API](https://interviewcoach-ai-backend.onrender.com)
+- Upload resumes in PDF, DOCX, or TXT format.
+- Extract structured resume data with a Groq-powered LLM.
+- Store and retrieve resume records per authenticated user.
+- Generate interview questions and interview flow content.
+- Provide chat-based interview coaching.
+- Serve a modern Next.js marketing and application UI.
 
----
-
-## ✨ Key Features
-
-### 📄 1. Resume Analysis & Job Matching
-* **Deep Match Analysis:** Compares your resume against job descriptions to provide a detailed match score (0-100).
-* **Smart Evaluation:** Evaluates eligibility based on *MUST-HAVE* vs *NICE-TO-HAVE* requirements.
-* **Actionable Feedback:** Receive clear strengths, weaknesses, and improvement suggestions to boost your chances.
-
-### ❓ 2. Interview Question Generation
-* **Targeted Questions:** Generates 10 role-specific interview questions based heavily on the job description.
-* **Context-Aware:** Leverages your resume data to ask highly relevant, personalized questions rather than generic ones.
-
-### 🤖 3. Smart Chat Assistant
-* **Memory-Aware Chat:** Maintains conversation history across sessions using persistent storage.
-* **Real-time AI:** Powered by Groq's Llama 3.1 for lightning-fast, intelligent coaching and guidance.
-* **Seamless UI Integration:** Ready to power real-time chat widgets with typing indicators and floating interfaces.
-
-### 👤 4. Candidate Profiling
-* **Resume Vault:** Securely store and manage multiple resume versions.
-* **Skill Tracking:** Automatically track extracted skills, experience, education, and projects.
-
----
-
-## 🧠 AI & LLM Capabilities
-
-<details>
-<summary><b>💬 Chat Assistant Features</b> (Click to expand)</summary>
-
-* **Memory Type:** Persistent conversation history with MongoDB storage.
-* **Session Management:** Auto-loads previous sessions on login.
-* **Architecture:** LangChain `RunnableWithMessageHistory` paired with a MongoDB backend.
-* **Response Time:** Sub-second responses powered by Groq API.
-* **Use Cases:** Mock interviews, behavioral prep, skill recommendations, and resume tweaks.
-</details>
-
-<details>
-<summary><b>🔍 Embeddings & RAG (Retrieval-Augmented Generation)</b> (Click to expand)</summary>
-
-* **Hugging Face Embeddings:** Uses `all-MiniLM-L6-v2` (384-dimensional vectors) for accurate semantic matching.
-* **Vector Search (FAISS):** Fast semantic search across resume chunks (500-character chunks with 100-character overlap) to prevent LLM hallucination.
-* **RAG Workflow:** 
-  1. Uploaded resume is parsed into chunks.
-  2. Vectors are stored in a FAISS index and cached.
-  3. Job description is semantically compared against chunks.
-  4. Top 5 matching sections are retrieved and passed to the LLM for precise scoring and feedback.
-</details>
-
----
-
-## 🏗️ System Architecture
+## Repository Layout
 
 ```text
-├── AuthService/                    # User authentication & registration
-│   ├── api/                        # Login, Register, Password Reset routes
-│   ├── controllers/                # Email verification & OTP services
-│   └── schemas/                    # Pydantic validation schemas
-├── JobMatching/                    # Resume-Job Matching (Score & Feedback)
-│   ├── analyser/                   # Core matching logic
-│   └── resumeCompare/              # LLM and RAG-based comparison engines
-├── interviewService/               # Interview Question Generation
-├── chat_agent/                     # AI Chat Assistant (LangChain + Groq)
-├── ResumeService/                  # Resume Management (Upload, Parse, Delete)
-├── Models/                         # MongoEngine Database Models (User, Resume, Chat)
-├── middlewares/                    # Custom Auth & Rate-limiting middlewares
-├── Dbconfig/                       # MongoDB configuration
-├── Frontend/                       # Next.js React Frontend (If included in repo)
-├── app.py                          # Main FastAPI application entrypoint
-└── requirements.txt                # Python dependencies
+app.py                     FastAPI application entrypoint and router wiring
+AuthService/               Authentication and account management backend
+JobMaching/                Job matching backend routes and analysis logic
+ResumeService/             Resume upload, parsing, preprocessing, and storage
+chat_agent/                Chat assistant backend routes
+interviewService/          Interview question and interview flow backend routes
+Frontend/                  Next.js 16 frontend application
+utils/                     Shared response, error, config, and token helpers
+Dbconfig/                  Database initialization and status helpers
+middlewares/               Auth and rate-limit middleware
+requirements.txt           Python dependencies for the backend
 ```
 
----
+## Backend Overview
 
-## 🚀 Installation & Setup
+The backend entrypoint is [app.py](app.py). It loads environment variables, initializes MongoDB on startup, enables CORS, and registers routers for auth, resume services, job matching, chat, and interview flows.
+
+The resume pipeline is split across several modules:
+
+- [ResumeService/api/uploadresume.py](ResumeService/api/uploadresume.py) handles authenticated resume uploads.
+- [ResumeService/services/resumeservice.py](ResumeService/services/resumeservice.py) saves the file, extracts text, preprocesses it, runs LLM analysis, and persists structured results.
+- [ResumeService/loaders/resume_loaders.py](ResumeService/loaders/resume_loaders.py) loads PDF, DOCX, and TXT files.
+- [ResumeService/preprocessing/preprocessing.py](ResumeService/preprocessing/preprocessing.py) cleans extracted text.
+- [ResumeService/analyzer/analysis.py](ResumeService/analyzer/analysis.py) parses resume content into structured JSON.
+- [ResumeService/api/getresumedata.py](ResumeService/api/getresumedata.py) returns the authenticated user’s saved resumes.
+- [ResumeService/api/deleteresume.py](ResumeService/api/deleteresume.py) deletes a resume after ownership checks.
+
+The shared config in [utils/constant.py](utils/constant.py) shows the main environment values the app expects:
+
+- `DATABASE_URL`
+- `DATABASE_NAME`
+- `ACCESS_TOKEN_KEY`
+- `REFRESH_TOKEN_KEY`
+- `GROQ_API_KEY`
+- `HF_TOKEN`
+- `GMAIL_USER`
+- `GMAIL_APP_PASSWORD`
+- `CORS_ORIGINS`
+- `MAX_FILE_UPLOAD_SIZE`
+
+## Frontend Overview
+
+The frontend lives in [Frontend/package.json](Frontend/package.json) and uses Next.js 16, React 19, Tailwind CSS 4, and TypeScript. The app folder includes the landing page plus route groups for auth, dashboard, resume, job matching, interview prep, and chat.
+
+Important frontend files:
+
+- [Frontend/app/landing-page.tsx](Frontend/app/landing-page.tsx) is the marketing landing page.
+- [Frontend/app/page.tsx](Frontend/app/page.tsx) is the main entry page for the app.
+- [Frontend/app/layout.tsx](Frontend/app/layout.tsx) provides shared layout structure.
+- [Frontend/app/globals.css](Frontend/app/globals.css) contains global styles.
+
+The landing page redirects authenticated users to `/dashboard` and otherwise presents the product overview, feature cards, workflow steps, and calls to action.
+
+## Setup
 
 ### Prerequisites
-* **Python 3.8+**
-* **MongoDB** (running locally or via Atlas)
-* **GROQ API Key** (for fast LLM capabilities)
-* **Hugging Face Token** (for Embeddings)
 
-### 1. Clone & Navigate
-```bash
-git clone https://github.com/yourusername/Interviewcoach-Ai.git
-cd "InterviewCoach AI"
-```
+- Python 3.8 or newer
+- Node.js 18+ for the frontend
+- MongoDB running locally or in Atlas
+- Groq API key
+- Hugging Face token if you use the embedding or RAG features
 
-### 2. Virtual Environment
+### Backend
+
 ```bash
 python -m venv venv
-# Windows
 venv\Scripts\activate
-# macOS/Linux
-source venv/bin/activate
-```
-
-### 3. Install Dependencies
-```bash
 pip install -r requirements.txt
-```
-
-### 4. Environment Variables
-Create a `.env` file in the project root:
-```env
-GROQ_API_KEY=your_groq_api_key_here
-HF_TOKEN=your_huggingface_token_here
-MONGODB_URI=mongodb://localhost:27017/interviewcoach
-JWT_SECRET=your_secret_key_here
-SMTP_EMAIL=your_email@gmail.com
-SMTP_PASSWORD=your_app_password
-```
-> *Get your free `HF_TOKEN` from [Hugging Face Settings](https://huggingface.co/settings/tokens).*
-
-### 5. Start MongoDB
-Ensure MongoDB is running on your system (`mongod`, `brew services start mongodb-community`, or `sudo systemctl start mongod`).
-
-### 6. Run the Application
-```bash
 uvicorn app:app --reload
 ```
-API runs at: `http://localhost:8000`
 
-### 7. View API Docs
-Navigate to **[http://localhost:8000/docs](http://localhost:8000/docs)** for the Swagger UI.
+The backend starts on `http://localhost:8000` by default.
 
----
+### Frontend
 
-## 📡 API Reference
+```bash
+cd Frontend
+npm install
+npm run dev
+```
 
-### 🔐 Authentication
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/auth/register` | Register a new user |
-| `POST` | `/auth/login` | Login and receive JWT token |
-| `POST` | `/auth/reset-password` | Reset account password |
-| `POST` | `/auth/verify-otp` | Verify email OTP |
+The frontend runs on the Next.js default port, usually `http://localhost:3000`.
 
-### 📄 Resumes
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/resume/upload` | Upload resume (PDF/DOCX) |
-| `GET` | `/api/resume/get/{id}` | Get parsed resume data |
-| `DELETE` | `/api/resume/delete/{id}` | Delete a resume |
+## Environment Variables
 
-### 🤖 Job Matching & AI
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/jobmatching/analyseresume` | Score resume against job description |
-| `POST` | `/api/interviewservice/generate` | Generate 10 role-specific questions |
+Create a `.env` file in the workspace root for the backend. The code reads these values directly:
 
-### 💬 Chat Agent
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/chat/create-session` | Start a new AI chat session |
-| `POST` | `/api/chat/send-message` | Send message & get AI response |
-| `GET` | `/api/chat/sessions` | List all chat sessions |
-| `GET` | `/api/chat/session/{id}` | Get full chat history |
+```env
+DATABASE_URL=mongodb://localhost:27017/interviewcoach
+DATABASE_NAME=interviewcoach
+ACCESS_TOKEN_KEY=your_access_token_secret
+REFRESH_TOKEN_KEY=your_refresh_token_secret
+GROQ_API_KEY=your_groq_api_key
+HF_TOKEN=your_hugging_face_token
+GMAIL_USER=your_email@gmail.com
+GMAIL_APP_PASSWORD=your_gmail_app_password
+CORS_ORIGINS=http://localhost:3000,http://localhost:3001
+MAX_FILE_UPLOAD_SIZE=10485760
+```
 
----
+## Main API Routes
 
-## 📊 Typical Workflow
+The exact route surface depends on the mounted routers in [app.py](app.py), but the resume endpoints currently exposed include:
 
-1. **Auth:** `POST /auth/login` to get a JWT token.
-2. **Upload:** `POST /api/resume/upload` to store your resume and extract skills.
-3. **Match:** `POST /api/jobmatching/analyseresume` with your `resume_id` and a target Job Description to get an eligibility score.
-4. **Prepare:** `POST /api/interviewservice/generate` to get highly targeted practice questions.
-5. **Practice:** Create a Chat Session (`POST /api/chat/create-session`) and practice answering the questions with the AI Agent (`POST /api/chat/send-message`). 
+- `POST /api/resume/upload-resume`
+- `GET /api/resume/user-resumes`
+- `GET /api/resume/resume/{resume_id}`
+- `DELETE /api/resume/delete-resume/{resume_id}`
 
----
+Other routers are mounted for authentication, job matching, chat, and interview flows.
 
-## 🔐 Security
+## Notes
 
-* **JWT Authentication:** Secure, token-based authentication with expiration mechanisms.
-* **Password Hashing:** Robust encryption for user credentials.
-* **OTP Verification:** Secure email verification for registration and password resets.
-* **Middleware Protection:** Custom rate-limiting and authorization layers.
-
----
-
-## 🎯 Roadmap
-
-- [x] Resume parsing, analysis & job matching
-- [x] Context-aware interview question generation
-- [x] JWT User authentication & secure resume management
-- [x] AI Chat Assistant with MongoDB memory
-- [ ] Support for multiple resume versions per user
-- [ ] Improved parsing for complex PDF/DOCX layouts
-- [ ] Real-time interview mock sessions (Voice/Video)
-- [ ] Performance metrics and analytics dashboard
-- [ ] Multi-language support
-
----
-
-<div align="center">
-  <b>Built with ❤️ by the Interview Coach AI Team</b><br>
-  <i>Last Updated: April 2026</i>
-</div>
+- The backend uses middleware for authentication and rate limiting.
+- Resume uploads are validated for file type, size, and non-empty content.
+- The resume analyzer expects clean text and returns structured JSON with name, skills, experience, education, and projects.
+- The frontend is already wired for authenticated redirects and a landing-page-first experience.

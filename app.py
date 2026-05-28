@@ -138,13 +138,19 @@ app.include_router(resetpassword_router)
 app.include_router(logout_router)
 
 
-app.include_router(resume_router, prefix="/api/resume")
+if resume_router is not None:
+    app.include_router(resume_router, prefix="/api/resume")
+else:
+    print("⚠️ Resume router unavailable; /api/resume/upload will be disabled")
 
 
 app.include_router(update_router, prefix="/api/resume")
 app.include_router(delete_router, prefix="/api/resume")
 app.include_router(debug_router, prefix="/api/resume")
-app.include_router(analyse_router, prefix="/api/jobmatching")
+if analyse_router is not None:
+    app.include_router(analyse_router, prefix="/api/jobmatching")
+else:
+    print("⚠️ JobMatching router unavailable; /api/jobmatching routes will be disabled")
 
 app.include_router(chat_router)
 app.include_router(interview_flow_router)
