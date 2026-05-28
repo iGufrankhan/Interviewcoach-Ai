@@ -7,7 +7,7 @@ with validation for numeric OTP codes and password strength.
 
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field, validator
-from lib.validators import OTPValidator, PasswordValidator, StringValidator
+from utils.validators import OTPValidator, PasswordValidator, StringValidator
 
 
 class OTPRequest(BaseModel):

@@ -7,7 +7,7 @@ submitting answers, and managing interview sessions.
 
 from typing import Optional
 from pydantic import BaseModel, Field, validator
-from lib.validators import StringValidator
+from utils.validators import StringValidator
 
 
 # ============================================

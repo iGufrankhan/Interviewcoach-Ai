@@ -7,7 +7,7 @@ with validation rules for password strength and email format.
 
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field, validator
-from lib.validators import PasswordValidator
+from utils.validators import PasswordValidator
 
 class UserLoginRequest(BaseModel):
     """User login request schema."""
