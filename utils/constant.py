@@ -33,7 +33,7 @@ MAX_FILE_UPLOAD_SIZE = int(os.getenv("MAX_FILE_UPLOAD_SIZE", "10485760"))  # 10M
 # ========== CORS Configuration ==========
 CORS_ORIGINS = os.getenv(
     "CORS_ORIGINS", 
-    "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001"
+    "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001,https://interviewcoach-ai-frontend-sb7x.vercel.app"
 ).split(",")
 
 
