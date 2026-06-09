@@ -35,6 +35,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         "/docs",
         "/openapi.json",
         "/redoc",
+        "/favicon.ico",
     }
     
     async def dispatch(self, request: Request, call_next):
