@@ -2,8 +2,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from datetime import datetime, timezone
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from fastapi.security import HTTPBearer
 from fastapi.middleware.cors import CORSMiddleware
+
+security_scheme = HTTPBearer(auto_error=False)
 from contextlib import asynccontextmanager
 
 from middlewares.auth_middleware import AuthMiddleware
