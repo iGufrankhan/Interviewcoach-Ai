@@ -19,6 +19,7 @@ class APIError(HTTPException):
             message = ERROR_MESSAGES.get(error_code, "An error occurred. Please try again.")
         
         self.error_code = error_code
+        self.message = message
         self.internal_message = internal_message
         
         super().__init__(
