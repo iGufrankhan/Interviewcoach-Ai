@@ -36,6 +36,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         "/openapi.json",
         "/redoc",
         "/favicon.ico",
+        "/debug-login"
     }
     
     async def dispatch(self, request: Request, call_next):
