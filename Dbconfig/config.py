@@ -98,7 +98,7 @@ class DatabaseConnection:
     @staticmethod
     async def _async_sleep(seconds):
         """Async sleep wrapper."""
-        time.sleep(seconds)
+        await asyncio.sleep(seconds)
     
     def get_connection_status(self) -> dict:
         """Get current connection status."""

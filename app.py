@@ -58,6 +58,7 @@ app = FastAPI(
     description="AI-powered interview preparation platform",
     version="1.1.0",
     lifespan=lifespan
+    dependencies=[Depends(security_scheme)]
 )
 
 app.add_middleware(
