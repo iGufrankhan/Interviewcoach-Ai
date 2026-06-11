@@ -18,6 +18,8 @@ async def VerifyOTP(email: str, otp: str):
     return await verifyotp(email, otp)
 
 
+import json
+
 async def CompleteRegistration(email: str, password: str, fullname: str = "", registration_token: str = ""):
     registration_result= await complete_registration(
         email=email,
@@ -25,11 +27,20 @@ async def CompleteRegistration(email: str, password: str, fullname: str = "", re
         fullname=fullname,
         registration_token=registration_token
     )
-    if registration_result.access_token and registration_result.refresh_token:
-        set_cookies([
-            ("access_token", registration_result.access_token, {"httponly": True, "secure": True}),
-            ("refresh_token", registration_result.refresh_token, {"httponly": True, "secure": True})
-        ])
+    
+    try:
+        body = json.loads(registration_result.body.decode("utf-8"))
+        data = body.get("data", {})
+        access_token = data.get("access_token")
+        refresh_token = data.get("refresh_token")
+        
+        if access_token and refresh_token:
+            set_cookies([
+                ("access_token", access_token, {"httponly": True, "secure": True}),
+                ("refresh_token", refresh_token, {"httponly": True, "secure": True})
+            ])
+    except Exception:
+        pass
         
     return registration_result
 

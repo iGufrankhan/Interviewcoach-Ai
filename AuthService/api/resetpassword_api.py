@@ -30,7 +30,7 @@ async def request_forgot_password_endpoint(request: Request, body: PasswordReset
     except APIError as e:
         detail = e.detail if isinstance(e.detail, dict) else {}
         return error_response(
-            message=detail.get("error", "Failed to initiate password reset"),
+            message=detail.get("message", "Failed to initiate password reset"),
             error_code=detail.get("error_code", "PASSWORD_RESET_ERROR"),
             status_code=e.status_code
         )
@@ -51,7 +51,7 @@ async def verify_forgot_password_otp_endpoint(request: Request, body: PasswordRe
     except APIError as e:
         detail = e.detail if isinstance(e.detail, dict) else {}
         return error_response(
-            message=detail.get("error", "OTP verification failed"),
+            message=detail.get("message", "OTP verification failed"),
             error_code=detail.get("error_code", "OTP_VERIFICATION_ERROR"),
             status_code=e.status_code
         )
@@ -71,7 +71,7 @@ async def resend_forgot_password_otp_endpoint(request: Request, body: PasswordRe
     except APIError as e:
         detail = e.detail if isinstance(e.detail, dict) else {}
         return error_response(
-            message=detail.get("error", "Failed to resend OTP"),
+            message=detail.get("message", "Failed to resend OTP"),
             error_code=detail.get("error_code", "OTP_RESEND_ERROR"),
             status_code=e.status_code
         )
@@ -92,7 +92,7 @@ async def reset_forgot_password_endpoint(request: Request, body: PasswordResetFi
     except APIError as e:
         detail = e.detail if isinstance(e.detail, dict) else {}
         return error_response(
-            message=detail.get("error", "Password reset failed"),
+            message=detail.get("message", "Password reset failed"),
             error_code=detail.get("error_code", "PASSWORD_RESET_FAILED"),
             status_code=e.status_code
         )

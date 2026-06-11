@@ -25,7 +25,7 @@ async def send_otp(request: OTPRequest):
     except APIError as e:
         detail = e.detail if isinstance(e.detail, dict) else {}
         return error_response(
-            message=detail.get("error", "Failed to send OTP"),
+            message=detail.get("message", "Failed to send OTP"),
             error_code=detail.get("error_code", "OTP_SEND_ERROR"),
             status_code=e.status_code
         )
@@ -43,7 +43,7 @@ async def resend_otp(request: OTPRequest):
     except APIError as e:
         detail = e.detail if isinstance(e.detail, dict) else {}
         return error_response(
-            message=detail.get("error", "Failed to resend OTP"),
+            message=detail.get("message", "Failed to resend OTP"),
             error_code=detail.get("error_code", "OTP_RESEND_ERROR"),
             status_code=e.status_code
         )
@@ -64,7 +64,7 @@ async def verify_otp(request: OTPVerificationRequest):
     except APIError as e:
         detail = e.detail if isinstance(e.detail, dict) else {}
         return error_response(
-            message=detail.get("error", "OTP verification failed"),
+            message=detail.get("message", "OTP verification failed"),
             error_code=detail.get("error_code", "OTP_VERIFICATION_ERROR"),
             status_code=e.status_code
         )
@@ -93,7 +93,7 @@ async def complete_registration(request: UserSignupRequest):
     except APIError as e:
         detail = e.detail if isinstance(e.detail, dict) else {}
         return error_response(
-            message=detail.get("error", "Registration failed"),
+            message=detail.get("message", "Registration failed"),
             error_code=detail.get("error_code", "REGISTRATION_ERROR"),
             status_code=e.status_code
         )

@@ -53,6 +53,17 @@ async def lifespan(app: FastAPI):
         pass
     yield
 
+@app.get("/debug-login")
+async def debug_login():
+    import os
+
+    return {
+        "database_url_exists": bool(os.getenv("DATABASE_URL")),
+        "database_name": os.getenv("DATABASE_NAME"),
+        "gmail_user_exists": bool(os.getenv("GMAIL_USER")),
+        "gmail_password_exists": bool(os.getenv("GMAIL_APP_PASSWORD"))
+    }
+    
 
 app = FastAPI(
     title="Interview Coach AI",
