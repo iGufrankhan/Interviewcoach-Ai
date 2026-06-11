@@ -57,7 +57,7 @@ app = FastAPI(
     title="Interview Coach AI",
     description="AI-powered interview preparation platform",
     version="1.1.0",
-    lifespan=lifespan
+    lifespan=lifespan,
     dependencies=[Depends(security_scheme)]
 )
 
