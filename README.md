@@ -19,10 +19,12 @@
 
 ## 🚀 Live Demo & API
 
-The backend API is successfully deployed on Render:
+Check out the live application here:
+- 🌐 **Live Frontend Application:** [`https://interviewcoach-ai-frontend-1wbx.vercel.app/`](https://interviewcoach-ai-frontend-1wbx.vercel.app/)
 - 🔌 **Production Backend API:** [`https://interviewcoach-ai-backend.onrender.com/`](https://interviewcoach-ai-backend.onrender.com/)
+- 📖 **Interactive API Docs (Swagger):** [`https://interviewcoach-ai-backend.onrender.com/docs`](https://interviewcoach-ai-backend.onrender.com/docs)
 
-*(Note: The frontend talks to the backend through the `NEXT_PUBLIC_API_URL` which should be set to this URL in production.)*
+*(Note: The frontend talks to the backend through the `NEXT_PUBLIC_API_URL` which must be set to the backend URL without a trailing slash.)*
 
 ---
 
@@ -40,13 +42,38 @@ The backend API is successfully deployed on Render:
 
 ---
 
-## 🖼️ Project images
+## 🖼️ Screenshots & Architecture
 
-Included visual assets for architecture and API screenshots:
+### 💻 Frontend Previews
+Take a look at our sleek Next.js user interface:
 
-- ER diagram: ![ER Diagram](Project_images/er_diagram.png)
-- API full view: ![API Full](Project_images/fullapi.png)
-- Health endpoint screenshot: ![Health Screenshot](Project_images/health.png)
+<div align="center">
+  <img src="frontend_image/frontend_1.png" alt="Frontend Dashboard" width="800" />
+  <br/><br/>
+
+  <img src="frontend_image/frontend_6.png" alt="UI Snippet 6" width="800" />
+  <br/><br/>
+
+  <img src="frontend_image/frontend_8.png" alt="UI Snippet 8" width="800" />
+  <br/><br/>
+  <img src="frontend_image/frontend_9.png" alt="UI Snippet 9" width="800" />
+</div>
+
+<br/>
+
+### ⚙️ Backend Architecture & API
+Here is our backend architecture and API documentation overview:
+
+<div align="center">
+  <h4>Database ER Diagram</h4>
+  <img src="Project_images/er_diagram.png" alt="ER Diagram" width="800" />
+  <br/><br/>
+  <h4>FastAPI Swagger Documentation</h4>
+  <img src="Project_images/fullapi.png" alt="API Full" width="800" />
+  <br/><br/>
+  <h4>Backend Health Endpoint</h4>
+  <img src="Project_images/health.png" alt="Health Screenshot" width="800" />
+</div>
 
 ## 📚 Detailed Documentation
 
