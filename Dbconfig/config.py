@@ -71,7 +71,7 @@ class DatabaseConnection:
             
             self.is_connected = True
             self.retry_count = 0
-            logger.info("✅ MongoDB connected successfully")
+            logger.info(" MongoDB connected successfully")
             
         except PyMongoError as e:
             logger.error(f"MongoDB connection error: {e}")

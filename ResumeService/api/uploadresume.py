@@ -89,7 +89,7 @@ async def upload_resume(request: Request, file: UploadFile = File(...)):
     except APIError:
         raise
     except Exception as e:
-        logger.error(f"❌ Resume processing failed: {str(e)}", exc_info=True)
+        logger.error(f" Resume processing failed: {str(e)}", exc_info=True)
         raise APIError(
             error_code=ErrorCode.RESUME_PROCESSING_FAILED,
             message=f"Failed to process resume: {str(e)}",

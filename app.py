@@ -20,9 +20,9 @@ import Dbconfig.config
 # ===== ROUTERS =====
 try:
     from ResumeService.api.uploadresume import router as resume_router
-    print("✅ Resume router loaded successfully")
+    print(" Resume router loaded successfully")
 except Exception as e:
-    print(f"❌ Failed to load resume router: {e}")
+    print(f" Failed to load resume router: {e}")
     resume_router = None
 
 from ResumeService.api.getresumedata import router as update_router
@@ -37,9 +37,9 @@ from AuthService.api.refreshtoken import router as refresh_token_router
 # JobMaching requires PyTorch which may fail to load on Windows
 try:
     from JobMaching.api.analyse import router as analyse_router
-    print("✅ JobMaching router loaded successfully")
+    print(" JobMaching router loaded successfully")
 except Exception as e:
-    print(f"⚠️ JobMaching router failed to load: {e}")
+    print(f" JobMaching router failed to load: {e}")
     analyse_router = None
 
 from interviewService.api.question_gen import router as question_gen_router
@@ -158,7 +158,7 @@ app.include_router(logout_router)
 if resume_router is not None:
     app.include_router(resume_router, prefix="/api/resume")
 else:
-    print("⚠️ Resume router unavailable; /api/resume/upload will be disabled")
+    print(" Resume router unavailable; /api/resume/upload will be disabled")
 
 
 app.include_router(update_router, prefix="/api/resume")
@@ -167,7 +167,7 @@ app.include_router(debug_router, prefix="/api/resume")
 if analyse_router is not None:
     app.include_router(analyse_router, prefix="/api/jobmatching")
 else:
-    print("⚠️ JobMatching router unavailable; /api/jobmatching routes will be disabled")
+    print(" JobMatching router unavailable; /api/jobmatching routes will be disabled")
 
 app.include_router(chat_router)
 app.include_router(interview_flow_router)

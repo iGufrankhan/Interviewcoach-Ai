@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>🔌 Backend API Documentation</h1>
+  <h1> Backend API Documentation</h1>
   <p><i>Complete and detailed reference for the Interview Coach AI REST API.</i></p>
   
   <p>
@@ -11,22 +11,22 @@
 
 ---
 
-## 📑 Table of Contents
+##  Table of Contents
 <details>
 <summary><b>Click to expand</b></summary>
 
-1. [🔐 Authentication APIs](#-authentication-apis)
-2. [📄 Resume APIs](#-resume-apis)
-3. [🎯 Interview APIs](#-interview-apis)
-4. [💬 Chat APIs](#-chat-apis)
-5. [💼 Job Matching APIs](#-job-matching-apis)
-6. [⚠️ Error Handling & Response Format](#-error-handling--response-format)
-7. [⚙️ Environment Variables & Notes](#-environment-variables--notes)
+1. [ Authentication APIs](#-authentication-apis)
+2. [ Resume APIs](#-resume-apis)
+3. [ Interview APIs](#-interview-apis)
+4. [ Chat APIs](#-chat-apis)
+5. [ Job Matching APIs](#-job-matching-apis)
+6. [ Error Handling & Response Format](#-error-handling--response-format)
+7. [ Environment Variables & Notes](#-environment-variables--notes)
 </details>
 
 ---
 
-## 🔐 Authentication APIs
+##  Authentication APIs
 
 > **Security Note:** All protected endpoints require the `Authorization: Bearer <jwt_token>` header.
 
@@ -39,7 +39,7 @@
 | <kbd>POST</kbd> | `/api/auth/reset-password` | Set a new password using the OTP. |
 
 <details>
-<summary><b>👀 View Example Payloads</b></summary>
+<summary><b> View Example Payloads</b></summary>
 
 **Login Request:**
 ```json
@@ -64,7 +64,7 @@
 
 ---
 
-## 📄 Resume APIs
+##  Resume APIs
 
 | Method | Endpoint | Description |
 |:---:|:---|:---|
@@ -74,7 +74,7 @@
 
 ---
 
-## 🎯 Interview APIs
+##  Interview APIs
 
 | Method | Endpoint | Description |
 |:---:|:---|:---|
@@ -87,7 +87,7 @@
 | <kbd>GET</kbd>  | `/api/interview/session/{id}` | Get detailed feedback for a specific interview. |
 
 <details>
-<summary><b>🎙️ Audio Transcription Rules</b></summary>
+<summary><b> Audio Transcription Rules</b></summary>
 
 * **Formats:** `WAV` (recommended), `MP3`, `WebM`.
 * **Requirements:** 16kHz sample rate, 5-60 seconds max duration.
@@ -99,7 +99,7 @@
 
 ---
 
-## 💬 Chat APIs
+##  Chat APIs
 
 | Method | Endpoint | Description |
 |:---:|:---|:---|
@@ -111,14 +111,14 @@
 
 ---
 
-## 💼 Job Matching APIs
+##  Job Matching APIs
 
 | Method | Endpoint | Description |
 |:---:|:---|:---|
 | <kbd>POST</kbd> | `/api/jobmatching/analyse` | Score a resume against a job description and get an action plan. |
 
 <details>
-<summary><b>👀 View Response Payload</b></summary>
+<summary><b> View Response Payload</b></summary>
 
 ```json
 {
@@ -136,9 +136,9 @@
 
 ---
 
-## ⚠️ Error Handling & Response Format
+##  Error Handling & Response Format
 
-**✅ Standard Success Response:**
+** Standard Success Response:**
 ```json
 {
   "status": "success",
@@ -147,7 +147,7 @@
 }
 ```
 
-**❌ Standard Error Response:**
+** Standard Error Response:**
 ```json
 {
   "status": "error",
@@ -164,7 +164,7 @@
 
 ---
 
-## ⚙️ Environment Variables & Notes
+##  Environment Variables & Notes
 
 Required `.env` file variables for the Backend:
 ```env

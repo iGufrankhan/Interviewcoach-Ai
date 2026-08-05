@@ -1,4 +1,4 @@
-<h1 align="center">✨ Interview Coach AI</h1>
+<h1 align="center"> Interview Coach AI</h1>
 
 <div align="center">
   <p><strong>Your Ultimate AI-Powered Interview Preparation Platform</strong></p>
@@ -7,28 +7,28 @@
 
 ---
 
-## 🌟 What It Does
+##  What It Does
 
-- 📄 **Upload & Analyze Resumes**: Extract key skills and experiences instantly.
-- 🎯 **Generate Interview Questions**: Tailored questions based on your resume and target job.
-- 💬 **AI Chat Coach**: Context-aware interview prep assistance.
-- 💼 **Job Matching**: Compare your profile against job descriptions.
-- 🔐 **Secure Auth**: OTP-based authentication flows and JWT token management.
+-  **Upload & Analyze Resumes**: Extract key skills and experiences instantly.
+-  **Generate Interview Questions**: Tailored questions based on your resume and target job.
+-  **AI Chat Coach**: Context-aware interview prep assistance.
+-  **Job Matching**: Compare your profile against job descriptions.
+-  **Secure Auth**: OTP-based authentication flows and JWT token management.
 
 ---
 
-## 🚀 Live Demo & API
+##  Live Demo & API
 
 Check out the live application here:
-- 🌐 **Live Frontend Application:** [`https://interviewcoach-ai-frontend-1wbx.vercel.app/`](https://interviewcoach-ai-frontend-1wbx.vercel.app/)
-- 🔌 **Production Backend API:** [`https://interviewcoach-ai-backend.onrender.com/`](https://interviewcoach-ai-backend.onrender.com/)
-- 📖 **Interactive API Docs (Swagger):** [`https://interviewcoach-ai-backend.onrender.com/docs`](https://interviewcoach-ai-backend.onrender.com/docs)
+-  **Live Frontend Application:** [`https://interviewcoach-ai-frontend-1wbx.vercel.app/`](https://interviewcoach-ai-frontend-1wbx.vercel.app/)
+-  **Production Backend API:** [`https://interviewcoach-ai-backend.onrender.com/`](https://interviewcoach-ai-backend.onrender.com/)
+-  **Interactive API Docs (Swagger):** [`https://interviewcoach-ai-backend.onrender.com/docs`](https://interviewcoach-ai-backend.onrender.com/docs)
 
 *(Note: The frontend talks to the backend through the `NEXT_PUBLIC_API_URL` which must be set to the backend URL without a trailing slash.)*
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 | Component | Description |
 |-----------|-------------|
@@ -42,9 +42,9 @@ Check out the live application here:
 
 ---
 
-## 🖼️ Screenshots & Architecture
+##  Screenshots & Architecture
 
-### 💻 Frontend Previews
+###  Frontend Previews
 Take a look at our sleek Next.js user interface:
 
 <div align="center">
@@ -61,7 +61,7 @@ Take a look at our sleek Next.js user interface:
 
 <br/>
 
-### ⚙️ Backend Architecture & API
+###  Backend Architecture & API
 Here is our backend architecture and API documentation overview:
 
 <div align="center">
@@ -75,18 +75,18 @@ Here is our backend architecture and API documentation overview:
   <img src="Project_images/health.png" alt="Health Screenshot" width="800" />
 </div>
 
-## 📚 Detailed Documentation
+##  Detailed Documentation
 
 Check out the following dedicated docs for more in-depth information:
 
-- [✨ All Features (ALL_FEATURES.md)](ALL_FEATURES.md)
-- [🔌 Backend API (BACKEND_API.md)](BACKEND_API.md)
-- [⚡ Quick Start Guide (QUICK_START.md)](QUICK_START.md)
-- [🔗 Backend-Frontend Integration (BACKEND_FRONTEND_INTEGRATION.md)](BACKEND_FRONTEND_INTEGRATION.md)
+- [ All Features (ALL_FEATURES.md)](ALL_FEATURES.md)
+- [ Backend API (BACKEND_API.md)](BACKEND_API.md)
+- [ Quick Start Guide (QUICK_START.md)](QUICK_START.md)
+- [ Backend-Frontend Integration (BACKEND_FRONTEND_INTEGRATION.md)](BACKEND_FRONTEND_INTEGRATION.md)
 
 ---
 
-## 🛠️ Local Setup
+##  Local Setup
 
 ### 1. Backend Setup
 
@@ -117,7 +117,7 @@ npm run dev
 
 ---
 
-## ⚙️ Environment Variables
+##  Environment Variables
 
 ### Backend (`.env`)
 
@@ -146,7 +146,7 @@ BACKEND_URL=https://interviewcoach-ai-backend.onrender.com
 
 ---
 
-## ☁️ Deployment
+##  Deployment
 
 ### Frontend on Vercel
 - Root directory: `Frontend`
@@ -160,7 +160,7 @@ BACKEND_URL=https://interviewcoach-ai-backend.onrender.com
 
 ---
 
-## 📝 Notes
+##  Notes
 
 - The backend heavily leverages **MongoDB** and **Groq**.
 - Please keep the frontend and backend deployed as separate services for scalability.

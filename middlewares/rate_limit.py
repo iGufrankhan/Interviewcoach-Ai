@@ -163,7 +163,7 @@ class RateLimitMiddleware:
     def _should_rate_limit(path: str) -> bool:
         return path.startswith(("/api", "/auth", "/question_gen", "/resume"))
 
-    # 🔥 FULLY FIXED FUNCTION
+    #  FULLY FIXED FUNCTION
     @staticmethod
     def _get_client_ip(scope) -> str:
         """

@@ -19,7 +19,7 @@ async def send_otp_email(email: str, purpose: str = "registration"):
     gmail_password = GMAIL_APP_PASSWORD
     
     if not gmail_user or not gmail_password:
-        logger.error(f"❌ Email not configured! GMAIL_USER={gmail_user}, GMAIL_PASSWORD={'***' if gmail_password else 'NOT SET'}")
+        logger.error(f" Email not configured! GMAIL_USER={gmail_user}, GMAIL_PASSWORD={'***' if gmail_password else 'NOT SET'}")
         raise APIError(
             status_code=500,
             message="Email service not configured",
@@ -47,12 +47,12 @@ async def send_otp_email(email: str, purpose: str = "registration"):
 
     fm = FastMail(CreateTransporter)
     try:
-        logger.info(f"📧 Attempting to send OTP to {email}...")
+        logger.info(f" Attempting to send OTP to {email}...")
         await fm.send_message(message)
-        logger.info(f"✅ OTP sent successfully to {email}")
+        logger.info(f" OTP sent successfully to {email}")
         return {"status": "success", "message": "OTP sent successfully"}
     except Exception as e:
-        logger.error(f"❌ Failed to send OTP email to {email}: {str(e)}")
+        logger.error(f" Failed to send OTP email to {email}: {str(e)}")
         raise APIError(
             status_code=500,
             message=f"Failed to send OTP email: {str(e)}",

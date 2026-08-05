@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>🌟 Interview Coach AI <br/> Complete Feature Documentation</h1>
+  <h1> Interview Coach AI <br/> Complete Feature Documentation</h1>
   <p><i>A comprehensive platform designed to help you ace your next interview through AI-powered coaching, interview simulations, resume analysis, and job matching.</i></p>
   
   <p>
@@ -10,31 +10,31 @@
 
 ---
 
-## 📑 Table of Contents
+##  Table of Contents
 <details>
 <summary><b>Click to expand</b></summary>
 
-1. [🔐 Authentication Features](#-authentication-features)
-2. [👤 User Management](#-user-management)
-3. [📄 Resume Management](#-resume-management)
-4. [🎯 Interview Features](#-interview-features)
-5. [🎙️ Audio Transcription](#-audio-transcription)
-6. [🤖 AI Chat Coach](#-ai-chat-coach)
-7. [💼 Job Matching](#-job-matching)
-8. [📊 Dashboard & Analytics](#-dashboard--analytics)
-9. [🖥️ Frontend Features](#-frontend-features)
-10. [🏗️ Backend Architecture](#-backend-architecture)
-11. [🔄 Integration Features](#-integration-features)
-12. [🗺️ User Journey](#-user-journey)
-13. [⚡ Performance Targets](#-performance-targets)
-14. [🚀 Roadmap](#-roadmap)
-15. [♿ Accessibility & Compliance](#-accessibility--compliance)
-16. [🧠 Embeddings & RAG](#-embeddings--rag)
+1. [ Authentication Features](#-authentication-features)
+2. [ User Management](#-user-management)
+3. [ Resume Management](#-resume-management)
+4. [ Interview Features](#-interview-features)
+5. [ Audio Transcription](#-audio-transcription)
+6. [ AI Chat Coach](#-ai-chat-coach)
+7. [ Job Matching](#-job-matching)
+8. [ Dashboard & Analytics](#-dashboard--analytics)
+9. [ Frontend Features](#-frontend-features)
+10. [ Backend Architecture](#-backend-architecture)
+11. [ Integration Features](#-integration-features)
+12. [ User Journey](#-user-journey)
+13. [ Performance Targets](#-performance-targets)
+14. [ Roadmap](#-roadmap)
+15. [ Accessibility & Compliance](#-accessibility--compliance)
+16. [ Embeddings & RAG](#-embeddings--rag)
 </details>
 
 ---
 
-## 🔐 Authentication Features
+##  Authentication Features
 
 > Secure and seamless access to your personal interview prep environment.
 
@@ -47,7 +47,7 @@
 
 ---
 
-## 👤 User Management
+##  User Management
 
 ### 1. User Profile & Preferences
 - **Profile:** Full name, username, verified email, creation date, last login.
@@ -60,11 +60,11 @@
 
 ---
 
-## 📄 Resume Management
+##  Resume Management
 
 ### 1. Upload & Parsing
 - **Supported Formats:** `PDF`, `DOCX`, `TXT` (up to 5MB).
-- **Process:** User uploads ➡️ System parses content ➡️ Data stored & indexed.
+- **Process:** User uploads  System parses content  Data stored & indexed.
 - **Extraction:** Auto-extracts contact info, summary, experience, education, skills, certs, projects.
 
 ### 2. Resume Vault
@@ -74,10 +74,10 @@
 
 ---
 
-## 🎯 Interview Features
+##  Interview Features
 
 ### 1. Interview Simulation
-- **Process:** User enters Job Title/Description ➡️ Selects Resume ➡️ AI generates 2 targeted questions ➡️ User answers (text/audio) ➡️ AI scores & gives feedback.
+- **Process:** User enters Job Title/Description  Selects Resume  AI generates 2 targeted questions  User answers (text/audio)  AI scores & gives feedback.
 
 ### 2. Question Generation (Groq LLaMA)
 - **Categories:** Technical, Behavioral, Situational (adaptable difficulty).
@@ -91,12 +91,12 @@
 
 ---
 
-## 🎙️ Audio Transcription
+##  Audio Transcription
 
 ### 1. Recording & Processing
 - **Tech:** Browser MediaRecorder API (WebM/WAV, 16kHz, 5-60s).
 - **Engine:** Google Speech-to-Text API (`en-US`).
-- **Workflow:** Record audio ➡️ Send as Base64 to `/transcribe-audio` ➡️ Google API transcribes ➡️ User edits/submits text.
+- **Workflow:** Record audio  Send as Base64 to `/transcribe-audio`  Google API transcribes  User edits/submits text.
 
 ### 2. Error Handling & Fallbacks
 - Handles `EMPTY_AUDIO`, `AUDIO_NOT_RECOGNIZED`, `INVALID_AUDIO_FORMAT`, and network errors gracefully.
@@ -104,7 +104,7 @@
 
 ---
 
-## 🤖 AI Chat Coach
+##  AI Chat Coach
 
 ### 1. Interactive Coaching
 - **Intelligence:** Context-aware, resume-aware, 24/7 personalized coaching using Groq LLaMA 3.1.
@@ -116,19 +116,19 @@
 
 ---
 
-## 💼 Job Matching
+##  Job Matching
 
 ### 1. Analysis & Scoring
-- **Process:** Parses Job Description ➡️ Extracts MUST-HAVE vs NICE-TO-HAVE skills ➡️ Compares to Resume.
+- **Process:** Parses Job Description  Extracts MUST-HAVE vs NICE-TO-HAVE skills  Compares to Resume.
 - **Score:** `0-100%` based on exact and partial matches weighted by importance.
 
 ### 2. Insights & Recommendations
 - **Fit Analysis:** Technical match, experience level, industry alignment.
-- **Action Plan:** Recommends specific skills to acquire, certifications, and resources. Highlights matching vs missing skills using color indicators (🟩 Green / 🟨 Yellow / 🟥 Red).
+- **Action Plan:** Recommends specific skills to acquire, certifications, and resources. Highlights matching vs missing skills using color indicators ( Green /  Yellow /  Red).
 
 ---
 
-## 📊 Dashboard & Analytics
+##  Dashboard & Analytics
 
 ### 1. Performance Tracking
 - **Metrics:** Total interviews, average score, best performance, improvement trends.
@@ -140,7 +140,7 @@
 
 ---
 
-## 🖥️ Frontend Features
+##  Frontend Features
 
 ### 1. UI/UX Design
 - **Pages:** Landing page, Auth screens, Dashboard, Interview Room, Resume Manager, Chat Widget, Job Matcher, Profile.
@@ -153,7 +153,7 @@
 
 ---
 
-## 🏗️ Backend Architecture
+##  Backend Architecture
 
 ### 1. Core Stack
 - **Framework:** FastAPI (RESTful, JWT Auth).
@@ -167,27 +167,27 @@
 
 ---
 
-## 🔄 Integration Features
+##  Integration Features
 
 ### 1. Data Flow
-- **Resume ➡️ Interview:** Resume data seeds the question generator.
-- **Interview ➡️ Chat:** Insights flow into ongoing coaching sessions.
-- **Resume ➡️ Matcher:** Continuous resume vs job posting evaluations.
+- **Resume  Interview:** Resume data seeds the question generator.
+- **Interview  Chat:** Insights flow into ongoing coaching sessions.
+- **Resume  Matcher:** Continuous resume vs job posting evaluations.
 
 ---
 
-## 🗺️ User Journey
+##  User Journey
 
-1. **Onboarding:** Register ➡️ Verify OTP ➡️ Login ➡️ Access Dashboard.
-2. **Setup:** Upload Resume(s) ➡️ System parses skills.
-3. **Analyze:** Paste Job Description ➡️ Analyze Match ➡️ View gaps/recommendations.
-4. **Prepare:** Start Chat Session ➡️ Ask for prep advice / STAR method tips.
-5. **Practice:** Start Interview ➡️ Answer AI Questions (Audio/Text) ➡️ Submit.
-6. **Review:** Review Score (0-10) ➡️ Read detailed feedback ➡️ Export report.
+1. **Onboarding:** Register  Verify OTP  Login  Access Dashboard.
+2. **Setup:** Upload Resume(s)  System parses skills.
+3. **Analyze:** Paste Job Description  Analyze Match  View gaps/recommendations.
+4. **Prepare:** Start Chat Session  Ask for prep advice / STAR method tips.
+5. **Practice:** Start Interview  Answer AI Questions (Audio/Text)  Submit.
+6. **Review:** Review Score (0-10)  Read detailed feedback  Export report.
 
 ---
 
-## ⚡ Performance Targets
+##  Performance Targets
 
 | Metric | Target |
 |:---|:---|
@@ -200,7 +200,7 @@
 
 ---
 
-## 🚀 Roadmap (Future Features)
+##  Roadmap (Future Features)
 
 - **Phase 2:** Video interviews (eye contact analysis), Live peer interviews, Salary negotiation module.
 - **Phase 3:** Native Mobile App (iOS/Android), Advanced body language analytics, Interview question database.
@@ -208,7 +208,7 @@
 
 ---
 
-## ♿ Accessibility & Compliance
+##  Accessibility & Compliance
 
 - **A11y:** Screen reader compatibility, semantic HTML, focus indicators.
 - **Privacy (GDPR):** User data encryption, transparent usage, data deletion on request.
@@ -216,16 +216,16 @@
 
 ---
 
-## 🧠 Embeddings & RAG (Semantic Search)
+##  Embeddings & RAG (Semantic Search)
 
 ### 1. Tech Stack
 - **Model:** `all-MiniLM-L6-v2` (384-dim vectors via Hugging Face).
 - **Storage:** FAISS (Facebook AI Similarity Search) for blazing-fast vector retrieval.
 
 ### 2. Workflow
-1. Resume uploaded ➡️ Chunked (500 chars, 100 overlap).
-2. Embedded via Hugging Face API ➡️ Stored in FAISS cache.
-3. Job description provided ➡️ Vectorized.
+1. Resume uploaded  Chunked (500 chars, 100 overlap).
+2. Embedded via Hugging Face API  Stored in FAISS cache.
+3. Job description provided  Vectorized.
 4. Top 5 most relevant resume chunks retrieved via FAISS.
 5. LLM generates highly accurate, hallucination-free feedback based *only* on retrieved chunks.
 

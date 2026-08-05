@@ -1,27 +1,27 @@
 <div align="center">
-  <h1>🔗 Backend-Frontend Integration Guide</h1>
+  <h1> Backend-Frontend Integration Guide</h1>
   <p><i>Complete guide on how the Interview Coach AI Next.js Frontend communicates with the FastAPI Backend.</i></p>
 </div>
 
 ---
 
-## 📑 Table of Contents
+##  Table of Contents
 <details>
 <summary><b>Click to expand</b></summary>
 
-1. [🏗️ Architecture Overview](#-architecture-overview)
-2. [⚙️ Setup & Configuration](#-setup--configuration)
-3. [📡 Frontend API Utilities](#-frontend-api-utilities)
-4. [🌊 Data Flow Examples](#-data-flow-examples)
-5. [🔐 Authentication Flow](#-authentication-flow)
-6. [⚠️ CORS & Security](#-cors--security)
-7. [🐛 Debugging & Troubleshooting](#-debugging--troubleshooting)
-8. [🚀 Deployment](#-deployment)
+1. [ Architecture Overview](#-architecture-overview)
+2. [ Setup & Configuration](#-setup--configuration)
+3. [ Frontend API Utilities](#-frontend-api-utilities)
+4. [ Data Flow Examples](#-data-flow-examples)
+5. [ Authentication Flow](#-authentication-flow)
+6. [ CORS & Security](#-cors--security)
+7. [ Debugging & Troubleshooting](#-debugging--troubleshooting)
+8. [ Deployment](#-deployment)
 </details>
 
 ---
 
-## 🏗️ Architecture Overview
+##  Architecture Overview
 
 The system follows a clean separation of concerns:
 
@@ -34,7 +34,7 @@ flowchart TD
 
 ---
 
-## ⚙️ Setup & Configuration
+##  Setup & Configuration
 
 ### Backend
 1. Create a `.env` file containing `GROQ_API_KEY` and `DATABASE_URL`.
@@ -60,7 +60,7 @@ flowchart TD
 
 ---
 
-## 📡 Frontend API Utilities
+##  Frontend API Utilities
 
 All backend interactions should go through `Frontend/lib/api.ts` which handles token injection, error handling, and type safety automatically.
 
@@ -78,7 +78,7 @@ const result = await uploadResume(userId, file);
 
 ---
 
-## 🌊 Data Flow Examples
+##  Data Flow Examples
 
 ### 1. Interview Question Generation
 1. **User Action:** User enters Job Description + selects a Resume.
@@ -96,7 +96,7 @@ const result = await uploadResume(userId, file);
 
 ---
 
-## 🔐 Authentication Flow
+##  Authentication Flow
 
 1. **Login:** Send credentials to `POST /api/login/`.
 2. **Store:** Save `access_token` and `user_id` in `localStorage` (or secure cookies).
@@ -105,7 +105,7 @@ const result = await uploadResume(userId, file);
 
 ---
 
-## ⚠️ CORS & Security
+##  CORS & Security
 
 By default, the backend allows requests from `http://localhost:3000` and `http://127.0.0.1:3000`. 
 To add production domains, update `app.py`:
@@ -121,7 +121,7 @@ allow_origins=[
 
 ---
 
-## 🐛 Debugging & Troubleshooting
+##  Debugging & Troubleshooting
 
 ### Common Issues
 - **CORS Error (Access Blocked):** Ensure your frontend URL exactly matches the strings in `allow_origins` in `app.py`.
@@ -136,7 +136,7 @@ NEXT_PUBLIC_DEBUG=true
 
 ---
 
-## 🚀 Deployment
+##  Deployment
 
 ### Backend (Render / VPS)
 Use `gunicorn` for production deployment instead of `uvicorn`:

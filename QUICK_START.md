@@ -1,23 +1,23 @@
 <div align="center">
-  <h1>⚡ Quick Start Guide</h1>
+  <h1> Quick Start Guide</h1>
   <p><i>Get Interview Coach AI up and running on your local machine in minutes.</i></p>
 </div>
 
 ---
 
-## 📋 Prerequisites
+##  Prerequisites
 
 Before you begin, ensure you have the following installed and ready:
 
-- 🟢 **Node.js 18+** and **npm**
-- 🐍 **Python 3.8+**
-- 🍃 **MongoDB 5.0+** (Local installation or MongoDB Atlas Cloud)
-- 🔑 **Groq API Key** (Free tier available)
-- 🤗 **Hugging Face Token** (Free tier available)
+-  **Node.js 18+** and **npm**
+-  **Python 3.8+**
+-  **MongoDB 5.0+** (Local installation or MongoDB Atlas Cloud)
+-  **Groq API Key** (Free tier available)
+-  **Hugging Face Token** (Free tier available)
 
 ---
 
-## 🛠️ Step-by-Step Setup
+##  Step-by-Step Setup
 
 ### Step 1: Database Setup (MongoDB)
 
@@ -75,7 +75,7 @@ SMTP_PASSWORD=your_app_password
 ```bash
 uvicorn app:app --reload --port 8000
 ```
-> 🎉 *Backend is now running on `http://localhost:8000`*
+>  *Backend is now running on `http://localhost:8000`*
 
 ---
 
@@ -105,11 +105,11 @@ echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
 ```bash
 npm run dev
 ```
-> 🎉 *Frontend is now running on `http://localhost:3000`*
+>  *Frontend is now running on `http://localhost:3000`*
 
 ---
 
-## 🎮 Access the Application
+##  Access the Application
 
 1. Open your browser and go to [http://localhost:3000](http://localhost:3000).
 2. Click **Login** or **Get Started** to create a free account.
@@ -118,7 +118,7 @@ npm run dev
 
 ---
 
-## 🛑 Troubleshooting
+##  Troubleshooting
 
 > **Stuck? Check out these common solutions:**
 
@@ -135,5 +135,5 @@ npm run dev
 ---
 
 <div align="center">
-  <b>Happy Building! 🚀</b>
+  <b>Happy Building! </b>
 </div>

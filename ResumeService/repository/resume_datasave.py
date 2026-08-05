@@ -9,21 +9,21 @@ logger = logging.getLogger(__name__)
 async def save_resume(resume_data, user_id):
     """Saves the structured resume data to the database."""
     try:
-        logger.info(f"💾 Saving resume for user: {user_id}")
+        logger.info(f" Saving resume for user: {user_id}")
         logger.info(f"   Resume data keys: {resume_data.keys() if isinstance(resume_data, dict) else 'N/A'}")
         
         # user_id is now the email (from JWT token)
         user = await User.async_find_one(email=user_id)
         
         if not user:
-            logger.error(f"❌ User not found: {user_id}")
+            logger.error(f" User not found: {user_id}")
             raise APIError(
                 status_code=404,
                 message="User not found",
                 error_code="USER_NOT_FOUND"
             )
         
-        logger.info(f"✅ User found: {user.email}")
+        logger.info(f" User found: {user.email}")
         logger.info(f"   Creating Resume_data object...")
         
         resume_doc = Resume_data(
@@ -36,13 +36,13 @@ async def save_resume(resume_data, user_id):
         )
         logger.info(f"   Resume object created, saving to database...")
         await resume_doc.async_save()
-        logger.info(f"✅ Resume saved successfully with ID: {resume_doc.id}")
+        logger.info(f" Resume saved successfully with ID: {resume_doc.id}")
         return create_resume_schema(resume_doc)
     
     except APIError:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to save resume: {str(e)}", exc_info=True)
+        logger.error(f" Failed to save resume: {str(e)}", exc_info=True)
         raise APIError(
             status_code=500,
             message=f"Failed to save resume: {str(e)}",
