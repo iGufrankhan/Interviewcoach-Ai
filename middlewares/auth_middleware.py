@@ -49,7 +49,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         auth_endpoints = {"/api/login", "/api/auth", "/login"}
-        if any(request.url.path.startswith(endpoint) for endpoint in auth_endpoints):
+        normalized_path = request.url.path
+        while "//" in normalized_path:
+            normalized_path = normalized_path.replace("//", "/")
+            
+        if any(normalized_path.startswith(endpoint) for endpoint in auth_endpoints):
             return await call_next(request)
         
         # Extract token from cookies or Authorization header

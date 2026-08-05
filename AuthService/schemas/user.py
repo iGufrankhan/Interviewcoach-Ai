@@ -13,12 +13,7 @@ class UserLoginRequest(BaseModel):
     """User login request schema."""
     
     email: EmailStr = Field(..., description="The user's email address")
-    password: str = Field(..., min_length=8, description="The user's password")
-
-    @validator("password")
-    def validate_password(cls, v: str) -> str:
-        """Validate password meets strength requirements."""
-        return PasswordValidator.validate_strength(v)
+    password: str = Field(..., description="The user's password")
 
 
 class UserResponse(BaseModel):
