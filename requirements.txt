@@ -18,3 +18,4 @@ slowapi>=0.1.9
 faiss-cpu>=1.7.4
 huggingface_hub
  
+resend==2.1.0
