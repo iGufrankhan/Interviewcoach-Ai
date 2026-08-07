@@ -91,7 +91,7 @@ async def get_resume(resume_id:str, request: Request):
         if "user" in resume_dict:
             resume_dict["user_id"] = str(resume_dict["user"])
             resume_dict.pop("user")
-        resume_dict["email"] = resume.user.email
+        resume_dict["email"] = user.email
         if "created_at" in resume_dict:
             resume_dict["created_at"] = resume_dict["created_at"].isoformat()
         return success_response(

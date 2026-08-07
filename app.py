@@ -64,16 +64,16 @@ app = FastAPI(
     dependencies=[Depends(security_scheme)]
 )
 
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(AuthMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for now
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"]
 )
-
-app.add_middleware(RateLimitMiddleware)
-app.add_middleware(AuthMiddleware)
 
 
 START_TIME = datetime.now(timezone.utc)
