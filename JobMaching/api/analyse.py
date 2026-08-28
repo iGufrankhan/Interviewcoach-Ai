@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Request
+import os
+import logging
+from fastapi import APIRouter, Request, Query
 from pydantic import BaseModel, Field, validator
 from JobMaching.analyser.resumeanalise import JobMatchingService
+from JobMaching.analyser.agentic_search import AgenticSearchService
 from utils.apierror import APIError
 from utils.error_codes import ErrorCode
-from utils.apiresponse import success_response
+from utils.apiresponse import success_response, error_response
 from utils.constant import GROQ_API_KEY
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -78,4 +80,35 @@ async def analyse_resume(request: Request, req_body: AnalyseResumeRequest):
         raise APIError(
             error_code=ErrorCode.ANALYSIS_FAILED,
             internal_message=str(e)
+        )
+
+
+# --- NEW SMART SEARCH ENDPOINT ---
+
+@router.get("/smart-search")
+async def smart_job_search(request: Request, target_role: str = Query(...)):
+    user = request.state.user
+    
+    try:
+        search_service = AgenticSearchService()
+        formatted_jobs = await search_service.search_and_match(target_role, user)
+        
+        return success_response(
+            message="Smart search complete", 
+            data={"jobs": formatted_jobs}, 
+            status_code=200
+        )
+        
+    except APIError as api_err:
+        return error_response(
+            message=api_err.message, 
+            error_code=api_err.error_code, 
+            status_code=api_err.status_code
+        )
+    except Exception as e:
+        logger.error(f"Agentic Search Error: {e}", exc_info=True)
+        return error_response(
+            message="Failed to search jobs. Check logs.", 
+            error_code="SEARCH_ERROR", 
+            status_code=500
         )

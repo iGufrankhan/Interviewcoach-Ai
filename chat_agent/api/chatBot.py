@@ -90,8 +90,9 @@ async def send_message(req: SendMessageRequest, request: Request):
             status_code=e.status_code
         )
     except Exception as e:
+        print(f"ChatBot error: {str(e)}")
         return error_response(
-            message="Failed to send message",
+            message=f"Failed to send message: {str(e)}",
             error_code="MESSAGE_SEND_ERROR",
             status_code=500
         )

@@ -45,7 +45,7 @@ EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
 HF_TOKEN = os.getenv("HF_TOKEN")
 CACHE_TTL = int(os.getenv("CACHE_TTL", "3600"))  # 1 hour expiration (in seconds)   
 
-
-
+YOUR_ADZUNA_APP_KEY = os.getenv("YOUR_ADZUNA_APP_KEY")
+YOUR_ADZUNA_APP_ID = os.getenv("YOUR_ADZUNA_APP_ID")
 
 

@@ -9,12 +9,14 @@ class jobDescriptionAnalyzer:
         self.resume_data = resume_data
         self.job_description = job_description
         self.llm = ChatGroq(
-            model="llama-3.1-8b-instant",
+            model="openai/gpt-oss-120b",
             api_key=api_key,
             temperature=0
         )
 
         self.prompt_template = """You are a professional recruiter. Analyze the candidate's resume against the job description and provide a comprehensive assessment.
+
+CRITICAL INSTRUCTION: Before analyzing, check if the "JOB DESCRIPTION" is a real job description. If it contains random garbage characters (e.g. "suyduGVGWE...", "test test", etc.) or is completely unrelated to a job posting, you MUST return a Score of 0, Eligible of NO, and explain that the job description is invalid in the Strengths, Weaknesses, and Suggestions. DO NOT hallucinate a match for gibberish!
 
 RESUME:
 {resume_data}
@@ -35,16 +37,14 @@ SCORING (0-100):
 - 0-29: Very poor fit
 
 RETURN FORMAT (EACH ON ITS OWN LINE):
-Score: [0-100]
-Eligible: [YES/PARTIAL/NO]
-Strengths: [strength 1] | [strength 2] | [strength 3] | [strength 4] | [strength 5]
-Weaknesses: [weakness 1] | [weakness 2] | [weakness 3] | [weakness 4] | [weakness 5]
+Score: <Replace with integer 0-100>
+Eligible: <Replace with YES, PARTIAL, or NO>
+Strengths: <Replace with 1 to 5 strengths separated by pipe | character>
+Weaknesses: <Replace with 1 to 5 weaknesses separated by pipe | character>
 Suggestions:
-1. [First specific actionable suggestion for improvement]
-2. [Second specific actionable suggestion for improvement]
-3. [Third specific actionable suggestion for improvement]
-4. [Fourth specific actionable suggestion for improvement]
-5. [Fifth specific actionable suggestion for improvement]"""
+1. <Replace with first actionable suggestion>
+2. <Replace with second actionable suggestion>
+(and so on...)"""
     
     def analyze(self):
         self.prompt = PromptTemplate(

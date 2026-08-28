@@ -28,10 +28,19 @@ async def start_interview(req: StartInterviewRequest, request: Request):
         if not api_key:
             raise APIError(status_code=400, message="API key is required", error_code="MISSING_API_KEY")
         
-        # Validate resume exists
-        resume = await Resume_data.async_find_one(id=req.resume_id)
-        if not resume:
-            raise APIError(status_code=404, message=f"Resume with ID {req.resume_id} not found", error_code="RESUME_NOT_FOUND")
+        user_obj = await User.async_find_one(email=user.email)
+        
+        # Validate resume exists or fetch latest
+        if req.resume_id == "user_needs_to_select_resume_first":
+            resumes = await Resume_data.async_find(user=user_obj)
+            if not resumes:
+                raise APIError(status_code=404, message="No resume found for user. Please upload one.", error_code="RESUME_NOT_FOUND")
+            resume = sorted(resumes, key=lambda x: x.created_at, reverse=True)[0]
+            req.resume_id = str(resume.id)
+        else:
+            resume = await Resume_data.async_find_one(id=req.resume_id)
+            if not resume:
+                raise APIError(status_code=404, message=f"Resume with ID {req.resume_id} not found", error_code="RESUME_NOT_FOUND")
         
         # Generate questions from job description
         data_loader = InterviewDataLoader()

@@ -9,7 +9,7 @@ class ResumeAnalyzer:
 
     def __init__(self, api_key: str):
         self.llm = ChatGroq(
-            model_name="llama-3.1-8b-instant",
+            model_name="openai/gpt-oss-120b",
             groq_api_key=api_key,
             temperature=0
         )

@@ -30,7 +30,7 @@ class RagLlmCompare:
         self.api_key = api_key
         self.resume_data = resume_data
         self.job_description = job_description
-        self.llm = ChatGroq(model="llama-3.1-8b-instant", api_key=self.api_key)
+        self.llm = ChatGroq(model="openai/gpt-oss-120b", api_key=self.api_key)
     
     def _format_docs(self, docs):
         """Format retrieved documents into string for LLM"""
@@ -55,6 +55,8 @@ class RagLlmCompare:
             prompt = PromptTemplate.from_template(
                 """You are an expert career coach AI helping job seekers understand resume-job fit.
                 
+                CRITICAL INSTRUCTION: First, determine if the "Full Job Description" is a genuine job posting. If it consists of random gibberish (e.g. "suyduGVGWE", random characters) or makes no sense, you MUST immediately return a SCORE of 0, ELIGIBLE of NO, and state that the input is invalid gibberish in the suggestions. Do NOT hallucinate a match!
+                
                 Retrieved Resume Sections:
                 {context}
                 
@@ -64,18 +66,16 @@ class RagLlmCompare:
                 Analyze how well the resume matches the job and provide structured feedback.
                 
                 RETURN FORMAT (EACH ON OWN LINE):
-                SCORE: <0-100>
-                ELIGIBLE: <YES/PARTIAL/NO>
-                EXPERIENCE_FIT: <0-100>
-                SKILLS_MATCH: <0-100>
-                STRENGTHS: [strength 1] | [strength 2] | [strength 3] | [strength 4] | [strength 5]
-                MISSING_SKILLS: [skill 1] | [skill 2] | [skill 3] | [skill 4] | [skill 5]
+                SCORE: <Replace with integer 0-100>
+                ELIGIBLE: <Replace with YES, PARTIAL, or NO>
+                EXPERIENCE_FIT: <Replace with integer 0-100>
+                SKILLS_MATCH: <Replace with integer 0-100>
+                STRENGTHS: <Replace with 1 to 5 actual strengths, separated by pipe | character>
+                MISSING_SKILLS: <Replace with 1 to 5 actual missing skills, separated by pipe | character>
                 SUGGESTIONS:
-                1. [First actionable suggestion]
-                2. [Second actionable suggestion]
-                3. [Third actionable suggestion]
-                4. [Fourth actionable suggestion]
-                5. [Fifth actionable suggestion]
+                1. <Replace with first actionable suggestion>
+                2. <Replace with second actionable suggestion>
+                (and so on...)
                 """
             )
             

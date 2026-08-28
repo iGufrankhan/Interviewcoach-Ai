@@ -38,9 +38,10 @@ CONTEXT:
 {context}
             """ 
             llm = ChatGroq(
-                model_name="llama-3.1-8b-instant",
                 groq_api_key=self.api_key,
-                temperature=0.7
+                model_name="openai/gpt-oss-120b",
+                temperature=0.7,
+                max_tokens=2048
             )
             
             prompt_template = PromptTemplate(
