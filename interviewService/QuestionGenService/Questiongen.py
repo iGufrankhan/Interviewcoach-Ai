@@ -51,19 +51,23 @@ CONTEXT:
             final_prompt = prompt_template.format(context=context)
             response = llm.invoke(final_prompt)
             
-            # Parse only numbered questions (1. 2. 3. etc)
+            import re
             lines = response.content.strip().split("\n")
             questions = []
             for line in lines:
                 line = line.strip()
-                # Match lines starting with number followed by . or )
-                if line and line[0].isdigit():
-                    # Remove number prefix (e.g., "1. " or "1) ")
-                    question = line.split(".", 1)[-1].split(")", 1)[-1].strip()
-                    if question:  # Only add non-empty questions
+                # Match 1., 1), - , *, or **1.** followed by text
+                match = re.search(r'^\s*(?:(?:\*\*)?\d+[\.\)](?:\*\*)?|-|\*)\s*(.*)', line)
+                if match:
+                    question = match.group(1).strip()
+                    if question:
                         questions.append(question)
             
-            return questions
+            # Fallback if no questions matched the format but we have text
+            if not questions and lines:
+                questions = [l.strip() for l in lines if len(l.strip()) > 15][:10]
+                
+            return questions[:10]
         except Exception as e:
             raise APIError(status_code=500, message=str(e), error_code="QUESTION_GENERATION_FAILED")
         

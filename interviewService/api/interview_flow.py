@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Request, Query
+import os
+import tempfile
+
+from fastapi import APIRouter, File, Request, Query, UploadFile
 from interviewService.loader.get_data import InterviewDataLoader
 from interviewService.QuestionGenService.Questiongen import QuestionGen
 from interviewService.Analyser.analysisanwer import AnalysisAnswer
@@ -29,8 +32,7 @@ async def start_interview(req: StartInterviewRequest, request: Request):
             raise APIError(status_code=400, message="API key is required", error_code="MISSING_API_KEY")
         
         user_obj = await User.async_find_one(email=user.email)
-        
-        # Validate resume exists or fetch latest
+   
         if req.resume_id == "user_needs_to_select_resume_first":
             resumes = await Resume_data.async_find(user=user_obj)
             if not resumes:
@@ -44,7 +46,7 @@ async def start_interview(req: StartInterviewRequest, request: Request):
         
         # Generate questions from job description
         data_loader = InterviewDataLoader()
-        context = data_loader.extract_job_info(req.job_description, api_key=api_key, resume_id=req.resume_id)
+        context = await data_loader.extract_job_info(req.job_description, api_key=api_key, resume_id=req.resume_id)
         
         question_gen = QuestionGen(api_key=api_key)
         questions = question_gen.generate_questions(context)
@@ -273,59 +275,82 @@ async def get_user_interviews(
             status_code=500
         )
 
+@router.post("/transcribe-audio")
 
-# @router.post("/transcribe-audio")
-# async def transcribe_audio(req: dict, request: Request):
-#     """Transcribe audio blob to text
-#     
-#     Expected request body:
-#     {
-#         "audio_data": "base64_encoded_audio_string"
-#     }
-#     """
-#     user = request.state.user
-#     try:
-#         audio_data = req.get("audio_data")
-#         if not audio_data:
-#             raise APIError(
-#                 status_code=400,
-#                 message="audio_data is required",
-#                 error_code="MISSING_AUDIO_DATA"
-#             )
-#         
-#         api_key = GROQ_API_KEY
-#         if not api_key:
-#             raise APIError(
-#                 status_code=400,
-#                 message="API key is required",
-#                 error_code="MISSING_API_KEY"
-#             )
-#         
-#         # Import here to avoid circular imports
-#         # from interviewService.anwerService.audio_transcriber import AudioTranscriber
-#         # 
-#         # transcriber = AudioTranscriber(api_key=api_key)
-#         # transcribed_text = transcriber.transcribe_audio(audio_data)
-#         # 
-#         # return success_response(
-#         #     message="Audio transcribed successfully",
-#         #     data={
-#         #         "transcribed_text": transcribed_text
-#         #     },
-#         #     status_code=200
-#         # )
-#         
-#         return error_response(
-#             message="Audio answers are currently disabled.",
-#             error_code="AUDIO_DISABLED",
-#             status_code=400
-#         )
-#     
-#     except APIError:
-#         raise
-#     except Exception as e:
-#         return error_response(
-#             message=f"Audio transcription failed: {str(e)}",
-#             error_code="TRANSCRIPTION_ERROR",
-#             status_code=500
-#         )
+async def transcribe_audio(request: Request, audio:UploadFile=File(...)):
+    """Transcribe audio file using Groq Whisper"""
+    user = request.state.user
+    temp_file_path =""
+    if not user:
+        raise APIError(status_code=401, message="Unauthorized", error_code="UNAUTHORIZED")
+    
+    try:
+        api_key = GROQ_API_KEY
+        if not api_key:
+            raise APIError(status_code=400, message="API key is required", error_code="MISSING_API_KEY")
+        
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_file:
+            content = await audio.read()
+            temp_file.write(content)
+            temp_file_path = temp_file.name
+       
+        from interviewService.anwerService.audio_transcriber import AudioTranscriber
+        transcriber = AudioTranscriber(api_key=api_key)
+        transcription_text = transcriber.transcribe_audio(temp_file_path)
+        
+        return success_response(
+            message="Audio transcribed successfully",
+            data={
+                "transcription": transcription_text,
+                "transcribed_text": transcription_text
+            },
+            status_code=200
+        )
+    except Exception as e:
+        return error_response(
+            message=str(e),
+            error_code="AUDIO_TRANSCRIPTION_ERROR",
+            status_code=500
+        )
+    finally:
+       
+        if temp_file_path and os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+            
+
+       
+    
+   
+
+@router.get("/dashboard-stats")
+async def get_dashboard_stats(request: Request):
+    user = request.state.user
+    try:
+        user_obj = await User.async_find_one(email=user.email)
+        
+        total_resumes = await Resume_data.async_count(user=user_obj)
+        interviews = await InterviewSession.async_find(user=user_obj)
+        interviews_taken = len(interviews)
+        
+        completed_interviews = [i for i in interviews if getattr(i, 'status', None) == "completed" and getattr(i, 'total_score', None) is not None]
+        avg_score = "--"
+        if completed_interviews:
+            total_score = sum(i.total_score for i in completed_interviews)
+            avg_score = f"{round(total_score / len(completed_interviews), 1)}/10"
+            
+        return success_response(
+            message="Dashboard stats retrieved",
+            data={
+                "total_resumes": total_resumes,
+                "interviews_taken": interviews_taken,
+                "avg_score": avg_score
+            },
+            status_code=200
+        )
+    except Exception as e:
+        return error_response(
+            message=str(e),
+            error_code="DASHBOARD_STATS_ERROR",
+            status_code=500
+        )

@@ -25,7 +25,9 @@ class AgenticSearchService:
         self.client = Groq(api_key=self.groq_api_key)
 
     async def _fetch_resume_text(self, user) -> str:
-        resumes = await Resume_data.async_find(user=user)
+        from Models.userReg.user import User
+        user_obj = await User.async_find_one(email=user.email)
+        resumes = await Resume_data.async_find(user=user_obj)
         if not resumes:
             raise APIError(
                 error_code="NO_RESUME",

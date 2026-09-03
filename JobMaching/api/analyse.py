@@ -108,7 +108,7 @@ async def smart_job_search(request: Request, target_role: str = Query(...)):
     except Exception as e:
         logger.error(f"Agentic Search Error: {e}", exc_info=True)
         return error_response(
-            message="Failed to search jobs. Check logs.", 
+            message=f"Failed to search jobs: {str(e)}", 
             error_code="SEARCH_ERROR", 
             status_code=500
         )
