@@ -11,6 +11,7 @@
   [![Backend](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi)](https://interviewcoach-ai-backend.onrender.com/docs)
   [![Database](https://img.shields.io/badge/Database-MongoDB-47A248?style=for-the-badge&logo=mongodb)](https://mongodb.com/)
   [![AI](https://img.shields.io/badge/AI-Groq-FF4F00?style=for-the-badge)](https://groq.com/)
+  [![VectorDB](https://img.shields.io/badge/VectorDB-FAISS-000000?style=for-the-badge)](https://github.com/facebookresearch/faiss)
   
   <p>Interview Coach AI is a full-stack web application with a <strong>FastAPI backend</strong> and a sleek <strong>Next.js frontend</strong>, designed to help you land your dream job by simulating hyper-realistic technical and behavioral interviews.</p>
 </div>
@@ -34,7 +35,10 @@ Experience the platform live right now!
 
 ## ✨ Core Features
 
+- 🌐 **Agentic Job Search**: Real-time integration with Adzuna API to fetch live jobs and instantly score them against your resume using a 120-Billion parameter AI model.
+- 🎙️ **"Real Zoom" Audio Interviews**: Speak your answers into your microphone! Uses the browser's native `MediaRecorder` API and Groq's lightning-fast `whisper-large-v3-turbo` model to transcribe your voice in milliseconds.
 - 📄 **Upload & Analyze Resumes**: Extract key skills and experiences instantly using advanced parsing.
+- 🧠 **RAG Pipeline (FAISS)**: Utilizes Retrieval-Augmented Generation with FAISS vector search for highly contextual resume parsing and dynamic question generation.
 - 🎯 **ATS Job Matching**: Compare your profile against job descriptions to expose missing keywords.
 - 🎤 **Mock Interviews**: Dynamically tailored questions based exclusively on your resume and target job.
 - 🤖 **AI Chat Coach**: Context-aware interview prep assistance powered by Groq.
@@ -134,6 +138,8 @@ ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_SECONDS=3600
 REFRESH_TOKEN_EXPIRE_SECONDS=604800
 GROQ_API_KEY=your_groq_api_key
+ADZUNA_APP_ID=your_adzuna_app_id
+ADZUNA_APP_KEY=your_adzuna_app_key
 HF_TOKEN=your_hugging_face_token
 RESEND_API_KEY=your_resend_api_key_here
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001,https://interviewcoach-ai-backend.onrender.com
