@@ -8,7 +8,7 @@
   <p><strong>Your Ultimate AI-Powered Interview Preparation Platform</strong></p>
   
   [![Frontend](https://img.shields.io/badge/Frontend-Next.js-black?style=for-the-badge&logo=next.js)](https://interviewcoach-ai-frontend-1wbx.vercel.app/)
-  [![Backend](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi)](https://interviewcoach-ai-backend.onrender.com/docs)
+  [![Backend](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi)](https://interviewcoach-ai-two.vercel.app/docs)
   [![Database](https://img.shields.io/badge/Database-MongoDB-47A248?style=for-the-badge&logo=mongodb)](https://mongodb.com/)
   [![AI](https://img.shields.io/badge/AI-Groq-FF4F00?style=for-the-badge)](https://groq.com/)
   [![VectorDB](https://img.shields.io/badge/VectorDB-FAISS-000000?style=for-the-badge)](https://github.com/facebookresearch/faiss)
@@ -25,9 +25,9 @@ Experience the platform live right now!
 | Component | Live URL |
 | :--- | :--- |
 | 🌐 **Live Frontend Demo** | [**interviewcoach-ai-frontend-1wbx.vercel.app**](https://interviewcoach-ai-frontend-1wbx.vercel.app/) |
-| ⚙️ **Backend API (Health)** | [**interviewcoach-ai-backend.onrender.com**](https://interviewcoach-ai-backend.onrender.com/) |
-| 📚 **Swagger API Docs** | [**interviewcoach-ai-backend.onrender.com/docs**](https://interviewcoach-ai-backend.onrender.com/docs) |
-| 📄 **ReDoc API Docs** | [**interviewcoach-ai-backend.onrender.com/redoc**](https://interviewcoach-ai-backend.onrender.com/redoc) |
+| ⚙️ **Backend API (Health)** | [**interviewcoach-ai-two.vercel.app**](https://interviewcoach-ai-two.vercel.app/) |
+| 📚 **Swagger API Docs** | [**interviewcoach-ai-two.vercel.app/docs**](https://interviewcoach-ai-two.vercel.app/docs) |
+| 📄 **ReDoc API Docs** | [**interviewcoach-ai-two.vercel.app/redoc**](https://interviewcoach-ai-two.vercel.app/redoc) |
 
 *(Note: The frontend talks to the backend through the `NEXT_PUBLIC_API_URL`. Never include a trailing slash at the end of the URL to prevent 404 double-slash errors.)*
 
@@ -142,14 +142,14 @@ ADZUNA_APP_ID=your_adzuna_app_id
 ADZUNA_APP_KEY=your_adzuna_app_key
 HF_TOKEN=your_hugging_face_token
 RESEND_API_KEY=your_resend_api_key_here
-CORS_ORIGINS=http://localhost:3000,http://localhost:3001,https://interviewcoach-ai-backend.onrender.com
+CORS_ORIGINS=http://localhost:3000,http://localhost:3001,https://interviewcoach-ai-two.vercel.app
 MAX_FILE_UPLOAD_SIZE=10485760
 ```
 
 ### Frontend (`Frontend/.env.local`)
 ```env
-NEXT_PUBLIC_API_URL=https://interviewcoach-ai-backend.onrender.com
-BACKEND_URL=https://interviewcoach-ai-backend.onrender.com
+NEXT_PUBLIC_API_URL=https://interviewcoach-ai-two.vercel.app
+BACKEND_URL=https://interviewcoach-ai-two.vercel.app
 # IMPORTANT: Never include a trailing slash (/) at the end of the API URLs!
 ```
 
