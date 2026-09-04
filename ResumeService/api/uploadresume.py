@@ -70,9 +70,10 @@ async def upload_resume(request: Request, file: UploadFile = File(...)):
         )
     
     try:
+        import tempfile
         # Initialize ResumeService with authenticated user's email
         resume_service = ResumeService(
-            upload_dir="uploads",
+            upload_dir=tempfile.gettempdir(),
             groq_api_key=groq_api_key,
             user_id=actual_user_email
         )

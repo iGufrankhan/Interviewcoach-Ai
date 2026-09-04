@@ -157,8 +157,8 @@ BACKEND_URL=https://interviewcoach-ai-two.vercel.app
 
 ## ☁️ Deployment
 
-- **Frontend:** Deploy the `Frontend` directory to **Vercel** as a Next.js project. Ensure environment variables are set correctly without trailing slashes.
-- **Backend:** Deploy the root directory to **Render** using the build command `pip install -r requirements.txt` and start command `uvicorn app:app --host 0.0.0.0 --port $PORT`.
+- **Frontend:** Deploy the `Frontend` directory to **Vercel** as a Next.js project.
+- **Backend:** Deploy the root directory to **Vercel** using Vercel Serverless Functions. A `vercel.json` file is required to route traffic to the FastAPI app.
 
 ---
 <div align="center">
